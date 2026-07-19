@@ -348,3 +348,52 @@ export async function broadcastAlert(req: AuthenticatedRequest, res: Response) {
     return res.status(500).json({ error: 'Internal server error.' });
   }
 }
+
+// 12. Fetch Timetable for a specific department and semester
+export async function getAdminTimetable(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { departmentCode, semester } = req.query;
+    if (!departmentCode || !semester) {
+      return res.status(400).json({ error: 'Department code and semester are required.' });
+    }
+
+    const depts = await query('SELECT id FROM departments WHERE code = ?', [String(departmentCode).toUpperCase()]);
+    if (depts.length === 0) return res.status(404).json({ error: 'Department not found.' });
+
+    const timetable = await query(`
+      SELECT t.id, t.day_of_week, t.start_time, t.end_time, t.room_number,
+             s.name as subject_name, s.code as subject_code,
+             f.name as faculty_name, f.email as faculty_email
+      FROM timetable t
+      JOIN subjects s ON t.subject_id = s.id
+      JOIN faculty f ON t.faculty_id = f.id
+      WHERE s.department_id = ? AND s.semester = ?
+      ORDER BY 
+        CASE t.day_of_week
+          WHEN 'Monday' THEN 1
+          WHEN 'Tuesday' THEN 2
+          WHEN 'Wednesday' THEN 3
+          WHEN 'Thursday' THEN 4
+          WHEN 'Friday' THEN 5
+          ELSE 6
+        END, t.start_time
+    `, [depts[0].id, parseInt(String(semester))]);
+
+    return res.json(timetable);
+  } catch (error: any) {
+    console.error('Error fetching admin timetable:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+// 13. Delete a timetable slot
+export async function deleteTimetableEntry(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    await exec('DELETE FROM timetable WHERE id = ?', [id]);
+    return res.json({ message: 'Timetable entry deleted successfully.' });
+  } catch (error: any) {
+    console.error('Error deleting timetable entry:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}

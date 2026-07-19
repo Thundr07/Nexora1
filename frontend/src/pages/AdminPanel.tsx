@@ -16,7 +16,8 @@ import {
   Clock,
   MapPin,
   Mail,
-  UserCheck
+  UserCheck,
+  Trash2
 } from 'lucide-react';
 
 const AdminPanel: React.FC = () => {
@@ -75,6 +76,12 @@ const AdminPanel: React.FC = () => {
   const [replyText, setReplyText] = useState<{ [id: number]: string }>({});
   const [replySuccess, setReplySuccess] = useState<string | null>(null);
 
+  // Tab: Timetable Visual Inspector
+  const [viewDept, setViewDept] = useState('CS');
+  const [viewSem, setViewSem] = useState('5');
+  const [timetableList, setTimetableList] = useState<any[]>([]);
+  const [listLoading, setListLoading] = useState(false);
+
   const fetchAdminData = async () => {
     try {
       const analyticRes = await axios.get('/api/admin/analytics');
@@ -92,9 +99,38 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const fetchTimetableList = async (deptCode: string, semNum: string) => {
+    setListLoading(true);
+    try {
+      const res = await axios.get(`/api/admin/timetable?departmentCode=${deptCode}&semester=${semNum}`);
+      setTimetableList(res.data);
+    } catch (err) {
+      console.error('Error fetching timetable list:', err);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const handleDeleteSlot = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this timetable entry?')) return;
+    try {
+      await axios.delete(`/api/admin/timetable/${id}`);
+      fetchTimetableList(viewDept, viewSem);
+      fetchAdminData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete entry');
+    }
+  };
+
   useEffect(() => {
     fetchAdminData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'schedules') {
+      fetchTimetableList(viewDept, viewSem);
+    }
+  }, [activeTab, viewDept, viewSem]);
 
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,6 +199,7 @@ const AdminPanel: React.FC = () => {
       setSchEnd('');
       setSchRoom('');
       fetchAdminData();
+      fetchTimetableList(viewDept, viewSem);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Schedule update failed');
     }
@@ -651,7 +688,8 @@ const AdminPanel: React.FC = () => {
 
         {/* TAB 5: TIMETABLE & TRANSIT */}
         {activeTab === 'schedules' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             {/* Class Timetable Scheduler */}
             <div className="glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 space-y-6">
@@ -831,6 +869,109 @@ const AdminPanel: React.FC = () => {
               </form>
             </div>
           </div>
+
+          {/* Visual Timetable Grid Inspector */}
+          <div className="glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 mt-8 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface-accent/10 pb-4">
+              <div>
+                <h3 className="text-xs uppercase tracking-widest text-accent font-extrabold flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" /> Live Timetable Inspector
+                </h3>
+                <p className="text-[10px] text-surface-accent mt-1">
+                  Select a department and semester to review and manage current class schedules.
+                </p>
+              </div>
+              
+              {/* Selectors */}
+              <div className="flex items-center gap-3 text-xs">
+                <div>
+                  <label className="block text-[9px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Dept</label>
+                  <select
+                    value={viewDept}
+                    onChange={(e) => setViewDept(e.target.value)}
+                    className="bg-midnight/50 border border-surface-accent/20 rounded px-2.5 py-1.5 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                  >
+                    <option value="CS">Computer Science (CS)</option>
+                    <option value="EE">Electrical (EE)</option>
+                    <option value="ME">Mechanical (ME)</option>
+                    <option value="CE">Civil (CE)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Semester</label>
+                  <select
+                    value={viewSem}
+                    onChange={(e) => setViewSem(e.target.value)}
+                    className="bg-midnight/50 border border-surface-accent/20 rounded px-2.5 py-1.5 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                  >
+                    <option value="1">Sem 1</option>
+                    <option value="2">Sem 2</option>
+                    <option value="3">Sem 3</option>
+                    <option value="4">Sem 4</option>
+                    <option value="5">Sem 5</option>
+                    <option value="6">Sem 6</option>
+                    <option value="7">Sem 7</option>
+                    <option value="8">Sem 8</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid content */}
+            {listLoading ? (
+              <div className="py-12 flex justify-center items-center gap-2">
+                <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs text-surface-accent">Loading schedules...</span>
+              </div>
+            ) : timetableList.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-surface-accent/15 rounded text-xs text-surface-accent">
+                No scheduled classes found for {viewDept} Semester {viewSem}.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs">
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => {
+                  const daySlots = timetableList.filter((t: any) => t.day_of_week === day);
+                  return (
+                    <div key={day} className="bg-midnight/35 p-3 rounded border border-surface-accent/10 space-y-3">
+                      <div className="border-b border-surface-accent/5 pb-1">
+                        <span className="font-extrabold text-[10px] uppercase text-accent tracking-wider">{day}</span>
+                      </div>
+                      
+                      {daySlots.length === 0 ? (
+                        <p className="text-[10px] text-surface-accent/60 italic py-2">No classes</p>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {daySlots.map((slot: any) => (
+                            <div key={slot.id} className="p-2.5 rounded bg-surface-primary/10 border border-surface-accent/5 relative group hover:border-accent/40 transition-colors">
+                              <div className="flex justify-between items-start">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 bg-surface-accent/20 text-accent rounded font-mono">
+                                  {slot.subject_code}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteSlot(slot.id)}
+                                  className="text-surface-accent/55 hover:text-red-400 transition-colors cursor-pointer"
+                                  title="Delete slot"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <p className="font-bold text-warm-white text-[10px] mt-1.5 line-clamp-1">{slot.subject_name}</p>
+                              <p className="text-[9px] text-surface-accent/80 mt-1">👨‍🏫 {slot.faculty_name}</p>
+                              <div className="flex justify-between items-center text-[8px] text-surface-accent/60 mt-1 border-t border-surface-accent/5 pt-1">
+                                <span>🕒 {slot.start_time} - {slot.end_time}</span>
+                                <span>📍 {slot.room_number}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          </>
         )}
 
         {/* TAB 6: RESOLVE GRIEVANCES */}

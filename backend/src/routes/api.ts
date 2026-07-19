@@ -19,6 +19,8 @@ import {
   createEvent,
   manageTransport,
   manageTimetable,
+  getAdminTimetable,
+  deleteTimetableEntry,
   getAllFeedback,
   replyFeedback,
   getStudents,
@@ -66,6 +68,8 @@ router.post('/admin/announcement', [authenticateToken, requireAdmin] as any, cre
 router.post('/admin/event', [authenticateToken, requireAdmin] as any, createEvent as any);
 router.post('/admin/transport', [authenticateToken, requireAdmin] as any, manageTransport as any);
 router.post('/admin/timetable', [authenticateToken, requireAdmin] as any, manageTimetable as any);
+router.get('/admin/timetable', [authenticateToken, requireAdmin] as any, getAdminTimetable as any);
+router.delete('/admin/timetable/:id', [authenticateToken, requireAdmin] as any, deleteTimetableEntry as any);
 router.get('/admin/feedback', [authenticateToken, requireAdmin] as any, getAllFeedback as any);
 router.post('/admin/feedback/reply', [authenticateToken, requireAdmin] as any, replyFeedback as any);
 router.get('/admin/students', [authenticateToken, requireAdmin] as any, getStudents as any);
