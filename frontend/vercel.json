@@ -7,6 +7,10 @@
     {
       "source": "/uploads/:path*",
       "destination": "https://nexora-backend-1xq5.onrender.com/uploads/:path*"
+    },
+    {
+      "source": "/((?!api|uploads).*)",
+      "destination": "/index.html"
     }
   ]
 }
