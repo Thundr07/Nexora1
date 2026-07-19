@@ -40,6 +40,9 @@ graph TD
 5.  **Department Hub ([ForYou.tsx](file:///c:/Users/david/OneDrive/Desktop/Nexora-main/Nexora-main/frontend/src/pages/ForYou.tsx)):**
     *   Renders student-specific analytics: GPA trackers, attendance progress, and task completion percentage bars.
     *   Retrieves contact cards for department faculty and HODs directly from the relational database.
+6.  **Admin Portal ([AdminPanel.tsx](file:///c:/Users/david/OneDrive/Desktop/Nexora-main/Nexora-main/frontend/src/pages/AdminPanel.tsx)):**
+    *   Integrates forms to broadcast notifications, post events, update bus routes, and schedule classes.
+    *   *Live Timetable Grid Inspector:* Includes an interactive department-level and semester-level scheduler board. Admins can view Monday-Friday classes in a visual grid and click trash icons to delete slots, immediately sync'ing schedules for all student dashboards in that department.
 
 ---
 
