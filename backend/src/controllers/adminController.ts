@@ -397,3 +397,35 @@ export async function deleteTimetableEntry(req: AuthenticatedRequest, res: Respo
     return res.status(500).json({ error: 'Internal server error.' });
   }
 }
+
+// 14. Create a new Subject
+export async function createSubject(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { name, code, departmentCode, semester } = req.body;
+    if (!name || !code || !departmentCode || !semester) {
+      return res.status(400).json({ error: 'All fields (name, code, departmentCode, semester) are required.' });
+    }
+
+    // Check if department exists
+    const depts = await query('SELECT id FROM departments WHERE code = ?', [String(departmentCode).toUpperCase()]);
+    if (depts.length === 0) {
+      return res.status(404).json({ error: `Department '${departmentCode}' not found.` });
+    }
+
+    // Check if subject code already exists
+    const existing = await query('SELECT id FROM subjects WHERE code = ?', [String(code).toUpperCase()]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: `Subject code '${code}' already exists.` });
+    }
+
+    await exec(`
+      INSERT INTO subjects (name, code, department_id, semester)
+      VALUES (?, ?, ?, ?)
+    `, [name, String(code).toUpperCase(), depts[0].id, parseInt(semester)]);
+
+    return res.json({ message: 'Subject created successfully.' });
+  } catch (error: any) {
+    console.error('Error creating subject:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}

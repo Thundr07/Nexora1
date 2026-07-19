@@ -82,6 +82,13 @@ const AdminPanel: React.FC = () => {
   const [timetableList, setTimetableList] = useState<any[]>([]);
   const [listLoading, setListLoading] = useState(false);
 
+  // Tab: Create Subject Form
+  const [subName, setSubName] = useState('');
+  const [subCode, setSubCode] = useState('');
+  const [subDept, setSubDept] = useState('CS');
+  const [subSem, setSubSem] = useState('1');
+  const [subSuccess, setSubSuccess] = useState<string | null>(null);
+
   const fetchAdminData = async () => {
     try {
       const analyticRes = await axios.get('/api/admin/analytics');
@@ -202,6 +209,26 @@ const AdminPanel: React.FC = () => {
       fetchTimetableList(viewDept, viewSem);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Schedule update failed');
+    }
+  };
+
+  const handleCreateSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubSuccess(null);
+    try {
+      await axios.post('/api/admin/subject', {
+        name: subName,
+        code: subCode.toUpperCase(),
+        departmentCode: subDept.toUpperCase(),
+        semester: parseInt(subSem)
+      });
+      setSubSuccess(`Subject ${subCode.toUpperCase()} created successfully!`);
+      setSubName('');
+      setSubCode('');
+      setSubDept('CS');
+      setSubSem('1');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to create subject');
     }
   };
 
@@ -691,8 +718,89 @@ const AdminPanel: React.FC = () => {
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            {/* Class Timetable Scheduler */}
-            <div className="glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 space-y-6">
+            {/* Column 1: Course & Schedule Management */}
+            <div className="space-y-8">
+              
+              {/* Create Course Subject Card */}
+              <div className="glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 space-y-6">
+                <div>
+                  <h3 className="text-xs uppercase tracking-widest text-accent font-extrabold flex items-center gap-1.5 border-b border-surface-accent/10 pb-3">
+                    <PlusCircle className="w-4 h-4" /> Create Course Subject
+                  </h3>
+                  <p className="text-[10px] text-surface-accent mt-1">Register new subjects for any department before scheduling slots.</p>
+                </div>
+
+                {subSuccess && (
+                  <div className="p-3 rounded bg-emerald-950/40 border border-emerald-800/30 text-emerald-300 text-xs">
+                    {subSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={handleCreateSubject} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Subject Code</label>
+                      <input
+                        type="text"
+                        required
+                        value={subCode}
+                        onChange={(e) => setSubCode(e.target.value)}
+                        placeholder="e.g., ME301"
+                        className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Subject Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={subName}
+                        onChange={(e) => setSubName(e.target.value)}
+                        placeholder="e.g., Thermodynamics"
+                        className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Department</label>
+                      <select
+                        value={subDept}
+                        onChange={(e) => setSubDept(e.target.value)}
+                        className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-3 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                      >
+                        <option value="CS">CS (Computer Science)</option>
+                        <option value="EE">EE (Electrical)</option>
+                        <option value="ME">ME (Mechanical)</option>
+                        <option value="CE">CE (Civil)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Semester</label>
+                      <select
+                        value={subSem}
+                        onChange={(e) => setSubSem(e.target.value)}
+                        className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-3 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                          <option key={sem} value={sem}>Sem {sem}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-btn-gradient text-midnight font-bold py-2.5 rounded hover:opacity-90 active:scale-[0.99] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Create Course Subject
+                  </button>
+                </form>
+              </div>
+
+              {/* Class Timetable Scheduler */}
+              <div className="glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 space-y-6">
               <div>
                 <h3 className="text-xs uppercase tracking-widest text-accent font-extrabold flex items-center gap-1.5 border-b border-surface-accent/10 pb-3">
                   <Clock className="w-4 h-4" /> Plan Class Timetable Schedule
@@ -793,6 +901,7 @@ const AdminPanel: React.FC = () => {
                   <PlusCircle className="w-4 h-4" /> Save Schedule Slot
                 </button>
               </form>
+            </div>
             </div>
 
             {/* Transit Lines Coordinator */}
