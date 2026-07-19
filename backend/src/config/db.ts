@@ -647,4 +647,24 @@ async function runMigrationsAndSeed() {
   } else {
     console.log('Database already seeded.');
   }
+
+  // Ensure Fresher's Party 2026 is seeded in all environments (including production)
+  const freshersEvent = await query("SELECT id FROM events WHERE title = ?", ["Fresher's Party 2026"]);
+  if (freshersEvent.length === 0) {
+    console.log("Seeding Fresher's Party 2026 into events...");
+    await exec(`
+      INSERT INTO events (title, description, category, type, date, time, location, department_id, max_participants, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
+    `, [
+      "Fresher's Party 2026",
+      "A grand welcome to the new beginning! Join us for an unforgettable night of live DJ & dance floor, music & cultural performances, fun games & activities, delicious dinner, and a chance to unite & connect. Organized by the Student Council & Cultural Committee.",
+      "Cultural",
+      "Event",
+      "2026-10-18",
+      "6:00 PM Onwards",
+      "SCE Main Auditorium",
+      500,
+      "/uploads/freshers_party_2026.jpg"
+    ]);
+  }
 }
