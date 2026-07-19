@@ -774,6 +774,9 @@ const AdminPanel: React.FC = () => {
                         <option value="EE">EE (Electrical)</option>
                         <option value="ME">ME (Mechanical)</option>
                         <option value="CE">CE (Civil)</option>
+                        <option value="ECE">ECE (Electronics & Comm.)</option>
+                        <option value="IT">IT (Information Technology)</option>
+                        <option value="AIDS">AIDS (AI & Data Science)</option>
                       </select>
                     </div>
                     <div>
@@ -1004,6 +1007,9 @@ const AdminPanel: React.FC = () => {
                     <option value="EE">Electrical (EE)</option>
                     <option value="ME">Mechanical (ME)</option>
                     <option value="CE">Civil (CE)</option>
+                    <option value="ECE">Electronics & Comm. (ECE)</option>
+                    <option value="IT">Information Technology (IT)</option>
+                    <option value="AIDS">AI & Data Science (AIDS)</option>
                   </select>
                 </div>
                 <div>

@@ -667,4 +667,22 @@ async function runMigrationsAndSeed() {
       "/uploads/freshers_party_2026.jpg"
     ]);
   }
+
+  // Ensure all required departments are seeded in all environments
+  const requiredDepts = [
+    { code: 'CS', name: 'Computer Science & Engineering' },
+    { code: 'EE', name: 'Electrical & Electronics Engineering' },
+    { code: 'ME', name: 'Mechanical Engineering' },
+    { code: 'CE', name: 'Civil Engineering' },
+    { code: 'ECE', name: 'Electronics & Communication Engineering' },
+    { code: 'IT', name: 'Information Technology' },
+    { code: 'AIDS', name: 'Artificial Intelligence & Data Science' }
+  ];
+  for (const dept of requiredDepts) {
+    const existing = await query("SELECT id FROM departments WHERE code = ?", [dept.code]);
+    if (existing.length === 0) {
+      console.log(`Auto-seeding department ${dept.code} (${dept.name})...`);
+      await exec("INSERT INTO departments (name, code) VALUES (?, ?)", [dept.name, dept.code]);
+    }
+  }
 }

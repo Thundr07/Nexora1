@@ -215,6 +215,10 @@ const Login: React.FC = () => {
                       <option value="CS">CSE (Computer Science)</option>
                       <option value="EE">EEE (Electrical)</option>
                       <option value="ME">ME (Mechanical)</option>
+                      <option value="CE">CE (Civil)</option>
+                      <option value="ECE">ECE (Electronics & Comm.)</option>
+                      <option value="IT">IT (Information Technology)</option>
+                      <option value="AIDS">AIDS (AI & Data Science)</option>
                     </select>
                   </div>
                 </div>
