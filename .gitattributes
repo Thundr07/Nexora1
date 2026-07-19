@@ -1,0 +1,16 @@
+# Force GitHub's language detector (Linguist) to track and count these files
+*.sql linguist-detectable=true
+*.sql linguist-documentation=false
+
+*.css linguist-detectable=true
+*.css linguist-documentation=false
+
+*.html linguist-detectable=true
+*.html linguist-documentation=false
+
+# If you want to balance the bar, you can mark specific large config files or scripts as vendored/documentation
+backend/tsconfig.json linguist-documentation
+frontend/tsconfig.json linguist-documentation
+tailwind.config.js linguist-documentation
+postcss.config.js linguist-documentation
+vite.config.ts linguist-documentation
