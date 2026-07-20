@@ -160,7 +160,7 @@ const Leaderboard: React.FC = () => {
       </div>
 
       {/* LEETCODE COMPUTING BRANCHES BANNER & WIDGETS */}
-      {selectedCategory === 'LeetCode' && (
+      {selectedCategory === 'LeetCode' ? (
         <div className="space-y-4">
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 flex items-center justify-between text-xs text-amber-200">
             <div className="flex items-center gap-3">
@@ -212,6 +212,45 @@ const Leaderboard: React.FC = () => {
               </div>
               <p className="text-[11px] text-surface-accent mt-0.5">Ranked computing students</p>
             </div>
+          </div>
+        </div>
+      ) : (
+        /* GENERAL CATEGORY SUMMARY STATS GRID */
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="glass-card p-4 border border-surface-accent/15">
+            <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">{selectedCategory} Leader</span>
+            <div className="text-lg font-black text-accent mt-1 truncate">
+              {leaderboard.length > 0 ? leaderboard[0].student_name : 'N/A'}
+            </div>
+            <p className="text-[11px] font-mono text-surface-accent mt-0.5 truncate">
+              {leaderboard.length > 0 ? `${leaderboard[0].points.toLocaleString()} pts (${leaderboard[0].department_code})` : 'No entry'}
+            </p>
+          </div>
+
+          <div className="glass-card p-4 border border-surface-accent/15">
+            <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Total Points</span>
+            <div className="text-lg font-black text-emerald-400 mt-1 font-mono">
+              {leaderboard.reduce((acc, item) => acc + (item.points || 0), 0).toLocaleString()} pts
+            </div>
+            <p className="text-[11px] text-surface-accent mt-0.5">Category aggregate score</p>
+          </div>
+
+          <div className="glass-card p-4 border border-surface-accent/15">
+            <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Average Points</span>
+            <div className="text-lg font-black text-cyan-400 mt-1 font-mono">
+              {leaderboard.length > 0
+                ? Math.round(leaderboard.reduce((acc, item) => acc + (item.points || 0), 0) / leaderboard.length).toLocaleString()
+                : 0} pts
+            </div>
+            <p className="text-[11px] text-surface-accent mt-0.5">Mean participant score</p>
+          </div>
+
+          <div className="glass-card p-4 border border-surface-accent/15">
+            <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Ranked Competitors</span>
+            <div className="text-lg font-black text-purple-400 mt-1 font-mono">
+              {leaderboard.length}
+            </div>
+            <p className="text-[11px] text-surface-accent mt-0.5">Active participants</p>
           </div>
         </div>
       )}

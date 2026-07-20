@@ -328,9 +328,9 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
       FROM leaderboard l
       JOIN students s ON l.student_id = s.id
       JOIN departments d ON s.department_id = d.id
-      WHERE 1=1
+      WHERE s.role != 'admin'
     `;
-    const params = [];
+    const params: any[] = [];
 
     if (category) {
       sql += ' AND l.category = ?';
@@ -343,7 +343,26 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
 
     sql += ' ORDER BY l.points DESC';
 
-    const leaderboard = await query(sql, params);
+    let leaderboard = await query(sql, params);
+
+    if (leaderboard.length === 0) {
+      let fallbackSql = `
+        SELECT 
+          s.id as student_id, s.name as student_name, s.roll_number, d.name as department_name, d.code as department_code,
+          (s.year * 350 + s.semester * 120 + s.id * 45) as points
+        FROM students s
+        JOIN departments d ON s.department_id = d.id
+        WHERE s.role != 'admin'
+      `;
+      const fallbackParams: any[] = [];
+      if (department) {
+        fallbackSql += ' AND d.code = ?';
+        fallbackParams.push(department);
+      }
+      fallbackSql += ' ORDER BY points DESC';
+      leaderboard = await query(fallbackSql, fallbackParams);
+    }
+
     return res.json(leaderboard);
   } catch (error: any) {
     console.error('Error fetching leaderboard:', error);

@@ -730,7 +730,34 @@ async function runMigrationsAndSeed() {
         }
       }
     }
+
+    // Auto-seed general leaderboard categories if missing
+    const allStudents = await query("SELECT id, name, email FROM students WHERE role != 'admin'");
+    const categoriesList = ['Coding', 'Hackathons', 'Innovation', 'Sports'];
+    
+    for (const student of allStudents) {
+      for (const cat of categoriesList) {
+        const existingLb = await query("SELECT id FROM leaderboard WHERE student_id = ? AND category = ?", [student.id, cat]);
+        if (existingLb.length === 0) {
+          let pts = 500;
+          if (student.email === 'alice@nexora.edu') {
+            pts = cat === 'Coding' ? 1850 : cat === 'Hackathons' ? 1450 : cat === 'Innovation' ? 1200 : 750;
+          } else if (student.email === 'charlie@nexora.edu') {
+            pts = cat === 'Coding' ? 1600 : cat === 'Hackathons' ? 1150 : cat === 'Innovation' ? 980 : 820;
+          } else if (student.email === 'bob@nexora.edu') {
+            pts = cat === 'Coding' ? 920 : cat === 'Hackathons' ? 850 : cat === 'Innovation' ? 700 : 1550;
+          } else if (student.email === 'dave@nexora.edu') {
+            pts = cat === 'Coding' ? 1350 : cat === 'Hackathons' ? 900 : cat === 'Innovation' ? 1100 : 600;
+          } else if (student.email === 'emma@nexora.edu') {
+            pts = cat === 'Coding' ? 780 : cat === 'Hackathons' ? 650 : cat === 'Innovation' ? 890 : 1380;
+          } else {
+            pts = Math.floor((student.id * 177) % 900) + 400;
+          }
+          await exec("INSERT INTO leaderboard (student_id, points, category) VALUES (?, ?, ?)", [student.id, pts, cat]);
+        }
+      }
+    }
   } catch (err) {
-    console.error('Error auto-seeding LeetCode stats:', err);
+    console.error('Error auto-seeding leaderboard stats:', err);
   }
 }
