@@ -61,6 +61,22 @@ const Academics: React.FC = () => {
     );
   }
 
+  if (data?.isAdmin || data?.cgpa === null) {
+    return (
+      <div className="space-y-6 pb-12">
+        <div className="glass-card p-8 border border-red-800/30 text-center max-w-2xl mx-auto space-y-4">
+          <div className="w-12 h-12 rounded-full bg-red-950/50 border border-red-800/40 flex items-center justify-center mx-auto text-red-400">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-extrabold text-warm-white uppercase tracking-tight">System Administrator Account</h2>
+          <p className="text-xs text-surface-accent leading-relaxed">
+            System Administrator profiles are administrative staff accounts and do not hold academic course enrollments, grade point averages (CGPA), or class attendance metrics.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const pendingAssignments = data?.assignments?.filter((a: any) => a.status === 'Pending') || [];
 
   return (

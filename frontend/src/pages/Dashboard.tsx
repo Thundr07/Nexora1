@@ -104,18 +104,27 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
-            <p className="text-[9px] uppercase tracking-widest text-surface-accent">Current GPA</p>
-            <p className="text-lg font-bold text-accent font-mono mt-0.5">
-              {data?.academicMetrics?.cgpa ? Number(data.academicMetrics.cgpa).toFixed(2) : '8.80'}
-            </p>
-          </div>
-          <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
-            <p className="text-[9px] uppercase tracking-widest text-surface-accent">Attendance</p>
-            <p className="text-lg font-bold text-accent font-mono mt-0.5">
-              {data?.academicMetrics?.attendancePercentage ?? 95}%
-            </p>
-          </div>
+          {user?.role !== 'admin' && data?.academicMetrics ? (
+            <>
+              <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
+                <p className="text-[9px] uppercase tracking-widest text-surface-accent">Current GPA</p>
+                <p className="text-lg font-bold text-accent font-mono mt-0.5">
+                  {Number(data.academicMetrics.cgpa || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
+                <p className="text-[9px] uppercase tracking-widest text-surface-accent">Attendance</p>
+                <p className="text-lg font-bold text-accent font-mono mt-0.5">
+                  {data.academicMetrics.attendancePercentage ?? 0}%
+                </p>
+              </div>
+            </>
+          ) : user?.role === 'admin' ? (
+            <div className="px-4 py-2 bg-red-950/40 border border-red-800/30 rounded text-center">
+              <p className="text-[9px] uppercase tracking-widest text-red-400 font-extrabold">System Admin</p>
+              <p className="text-xs font-bold text-warm-white font-mono mt-0.5">Console Access</p>
+            </div>
+          ) : null}
           {data?.leetcodeStats && (
             <div className="px-4 py-2 bg-midnight/60 border border-amber-500/30 rounded text-center">
               <p className="text-[9px] uppercase tracking-widest text-amber-400 font-bold flex items-center justify-center gap-1">

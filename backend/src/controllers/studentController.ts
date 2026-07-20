@@ -105,29 +105,34 @@ export async function getDashboard(req: AuthenticatedRequest, res: Response) {
     }));
 
     // 6. Dynamic Academic Metrics
-    const cgpaQuery = await query(`
-      SELECT AVG(score / max_score) * 10 as calc_cgpa
-      FROM marks
-      WHERE student_id = ?
-    `, [studentId]);
-    const dynamicCgpa = cgpaQuery[0]?.calc_cgpa !== null && cgpaQuery[0]?.calc_cgpa !== undefined
-      ? parseFloat(Number(cgpaQuery[0].calc_cgpa).toFixed(2))
-      : 8.80;
+    let dynamicCgpa: number | null = null;
+    let attendancePercentage: number | null = null;
 
-    const attendanceRecords = await query(`
-      SELECT status, count(*) as count 
-      FROM attendance 
-      WHERE student_id = ?
-      GROUP BY status
-    `, [studentId]);
-    let present = 0, absent = 0, late = 0;
-    attendanceRecords.forEach((record: any) => {
-      if (record.status === 'Present') present = record.count;
-      else if (record.status === 'Absent') absent = record.count;
-      else if (record.status === 'Late') late = record.count;
-    });
-    const totalClasses = present + absent + late;
-    const attendancePercentage = totalClasses > 0 ? Math.round(((present + late * 0.5) / totalClasses) * 100) : 100;
+    if (req.user.role !== 'admin') {
+      const cgpaQuery = await query(`
+        SELECT AVG(score / max_score) * 10 as calc_cgpa
+        FROM marks
+        WHERE student_id = ?
+      `, [studentId]);
+      dynamicCgpa = cgpaQuery[0]?.calc_cgpa !== null && cgpaQuery[0]?.calc_cgpa !== undefined
+        ? parseFloat(Number(cgpaQuery[0].calc_cgpa).toFixed(2))
+        : 8.80;
+
+      const attendanceRecords = await query(`
+        SELECT status, count(*) as count 
+        FROM attendance 
+        WHERE student_id = ?
+        GROUP BY status
+      `, [studentId]);
+      let present = 0, absent = 0, late = 0;
+      attendanceRecords.forEach((record: any) => {
+        if (record.status === 'Present') present = record.count;
+        else if (record.status === 'Absent') absent = record.count;
+        else if (record.status === 'Late') late = record.count;
+      });
+      const totalClasses = present + absent + late;
+      attendancePercentage = totalClasses > 0 ? Math.round(((present + late * 0.5) / totalClasses) * 100) : 100;
+    }
 
     return res.json({
       timetable,
@@ -135,7 +140,7 @@ export async function getDashboard(req: AuthenticatedRequest, res: Response) {
       events,
       busRoutes,
       clubs: parsedClubs,
-      academicMetrics: {
+      academicMetrics: req.user.role === 'admin' ? null : {
         cgpa: dynamicCgpa,
         attendancePercentage
       },
@@ -154,6 +159,18 @@ export async function getDashboard(req: AuthenticatedRequest, res: Response) {
 export async function getAcademics(req: AuthenticatedRequest, res: Response) {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (req.user.role === 'admin') {
+      return res.json({
+        marks: [],
+        attendance: { percentage: null, present: 0, absent: 0, late: 0, total: 0 },
+        assignments: [],
+        cgpa: null,
+        trends: [],
+        isAdmin: true
+      });
+    }
+
     const studentId = req.user.id;
     const deptId = req.user.department_id;
     const sem = req.user.semester;
