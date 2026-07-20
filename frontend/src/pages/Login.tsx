@@ -128,7 +128,7 @@ const Login: React.FC = () => {
             </span>
           </div>
           <h1 className="text-5xl font-extrabold tracking-tighter text-warm-white mb-2 font-sans">NEXORA</h1>
-          <p className="text-surface-accent text-sm tracking-wide">Modern Swiss Editorial College Ecosystem</p>
+          <p className="text-surface-accent text-sm tracking-wide">Personalized Student Portal</p>
         </div>
 
         {/* Unified Login Card Container */}
