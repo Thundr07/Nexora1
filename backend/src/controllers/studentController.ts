@@ -324,7 +324,7 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
     }
 
     let sql = `
-      SELECT l.points, l.category, s.name as student_name, s.roll_number, d.name as department_name, d.code as department_code
+      SELECT COALESCE(l.points, 0) as points, l.category, s.name as student_name, s.roll_number, d.name as department_name, d.code as department_code
       FROM leaderboard l
       JOIN students s ON l.student_id = s.id
       JOIN departments d ON s.department_id = d.id
@@ -345,7 +345,7 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
 
     let leaderboard = await query(sql, params);
 
-    if (leaderboard.length === 0) {
+    if (!Array.isArray(leaderboard) || leaderboard.length === 0) {
       let fallbackSql = `
         SELECT 
           s.id as student_id, s.name as student_name, s.roll_number, d.name as department_name, d.code as department_code,
@@ -363,7 +363,16 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
       leaderboard = await query(fallbackSql, fallbackParams);
     }
 
-    return res.json(leaderboard);
+    const safeLeaderboard = (leaderboard || []).map((item: any) => ({
+      ...item,
+      points: Number(item.points || 0),
+      student_name: item.student_name || 'Student',
+      roll_number: item.roll_number || 'N/A',
+      department_code: item.department_code || 'CS',
+      department_name: item.department_name || 'Computer Science'
+    }));
+
+    return res.json(safeLeaderboard);
   } catch (error: any) {
     console.error('Error fetching leaderboard:', error);
     return res.status(500).json({ error: 'Internal server error.' });

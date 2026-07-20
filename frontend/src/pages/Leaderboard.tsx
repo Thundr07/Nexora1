@@ -220,17 +220,19 @@ const Leaderboard: React.FC = () => {
           <div className="glass-card p-4 border border-surface-accent/15">
             <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">{selectedCategory} Leader</span>
             <div className="text-lg font-black text-accent mt-1 truncate">
-              {leaderboard.length > 0 ? leaderboard[0].student_name : 'N/A'}
+              {leaderboard.length > 0 && leaderboard[0]?.student_name ? leaderboard[0].student_name : 'N/A'}
             </div>
             <p className="text-[11px] font-mono text-surface-accent mt-0.5 truncate">
-              {leaderboard.length > 0 ? `${leaderboard[0].points.toLocaleString()} pts (${leaderboard[0].department_code})` : 'No entry'}
+              {leaderboard.length > 0 && leaderboard[0]?.points !== undefined
+                ? `${Number(leaderboard[0].points || 0).toLocaleString()} pts (${leaderboard[0].department_code || ''})`
+                : 'No entry'}
             </p>
           </div>
 
           <div className="glass-card p-4 border border-surface-accent/15">
             <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Total Points</span>
             <div className="text-lg font-black text-emerald-400 mt-1 font-mono">
-              {leaderboard.reduce((acc, item) => acc + (item.points || 0), 0).toLocaleString()} pts
+              {leaderboard.reduce((acc, item) => acc + Number(item?.points || 0), 0).toLocaleString()} pts
             </div>
             <p className="text-[11px] text-surface-accent mt-0.5">Category aggregate score</p>
           </div>
@@ -239,7 +241,7 @@ const Leaderboard: React.FC = () => {
             <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Average Points</span>
             <div className="text-lg font-black text-cyan-400 mt-1 font-mono">
               {leaderboard.length > 0
-                ? Math.round(leaderboard.reduce((acc, item) => acc + (item.points || 0), 0) / leaderboard.length).toLocaleString()
+                ? Math.round(leaderboard.reduce((acc, item) => acc + Number(item?.points || 0), 0) / leaderboard.length).toLocaleString()
                 : 0} pts
             </div>
             <p className="text-[11px] text-surface-accent mt-0.5">Mean participant score</p>
@@ -349,17 +351,17 @@ const Leaderboard: React.FC = () => {
                           <td className="py-3.5 text-center font-mono">
                             <div className="flex flex-col items-center gap-1">
                               <span className="font-black text-sm text-warm-white">
-                                {item.leetcode_solved.toLocaleString()}
+                                {Number(item.leetcode_solved || 0).toLocaleString()}
                               </span>
                               <div className="flex items-center gap-1 text-[10px]">
                                 <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded" title="Easy Solved">
-                                  {item.leetcode_easy} E
+                                  {item.leetcode_easy || 0} E
                                 </span>
                                 <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded" title="Medium Solved">
-                                  {item.leetcode_medium} M
+                                  {item.leetcode_medium || 0} M
                                 </span>
                                 <span className="px-1.5 py-0.2 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded" title="Hard Solved">
-                                  {item.leetcode_hard} H
+                                  {item.leetcode_hard || 0} H
                                 </span>
                               </div>
                             </div>
@@ -368,16 +370,16 @@ const Leaderboard: React.FC = () => {
                           {/* CONTEST RATING */}
                           <td className="py-3.5 text-center font-mono font-bold">
                             <div className="flex flex-col items-center">
-                              <span className="text-amber-300">{item.leetcode_rating}</span>
+                              <span className="text-amber-300">{item.leetcode_rating || 1500}</span>
                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-surface-accent">
-                                {item.leetcode_rating >= 1900 ? 'Guardian' : item.leetcode_rating >= 1700 ? 'Knight' : 'Specialist'}
+                                {(item.leetcode_rating || 1500) >= 1900 ? 'Guardian' : (item.leetcode_rating || 1500) >= 1700 ? 'Knight' : 'Specialist'}
                               </span>
                             </div>
                           </td>
 
                           {/* GLOBAL RANK */}
                           <td className="py-3.5 text-right font-mono text-surface-accent font-semibold">
-                            {item.leetcode_ranking > 0 ? `#${item.leetcode_ranking.toLocaleString()}` : 'Top 5%'}
+                            {item.leetcode_ranking > 0 ? `#${Number(item.leetcode_ranking).toLocaleString()}` : 'Top 5%'}
                           </td>
                         </>
                       ) : (
@@ -385,7 +387,7 @@ const Leaderboard: React.FC = () => {
                         <>
                           <td className="py-3.5 font-mono text-surface-accent">{item.roll_number}</td>
                           <td className="py-3.5 text-right font-mono font-black text-warm-white">
-                            {item.points.toLocaleString()} pts
+                            {Number(item?.points || 0).toLocaleString()} pts
                           </td>
                         </>
                       )}
