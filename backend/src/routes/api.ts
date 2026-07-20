@@ -18,6 +18,8 @@ import {
   getAnalytics,
   createAnnouncement,
   createEvent,
+  getAdminEvents,
+  deleteEvent,
   manageTransport,
   manageTimetable,
   getAdminTimetable,
@@ -69,6 +71,8 @@ router.post('/ai/chat', authenticateToken as any, chatAssistant as any);
 router.get('/admin/analytics', [authenticateToken, requireAdmin] as any, getAnalytics as any);
 router.post('/admin/announcement', [authenticateToken, requireAdmin] as any, createAnnouncement as any);
 router.post('/admin/event', [authenticateToken, requireAdmin] as any, createEvent as any);
+router.get('/admin/events', [authenticateToken, requireAdmin] as any, getAdminEvents as any);
+router.delete('/admin/event/:id', [authenticateToken, requireAdmin] as any, deleteEvent as any);
 router.post('/admin/transport', [authenticateToken, requireAdmin] as any, manageTransport as any);
 router.post('/admin/timetable', [authenticateToken, requireAdmin] as any, manageTimetable as any);
 router.get('/admin/timetable', [authenticateToken, requireAdmin] as any, getAdminTimetable as any);

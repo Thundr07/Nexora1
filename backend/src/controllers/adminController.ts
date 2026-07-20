@@ -103,6 +103,38 @@ export async function createEvent(req: AuthenticatedRequest, res: Response) {
   }
 }
 
+export async function getAdminEvents(req: AuthenticatedRequest, res: Response) {
+  try {
+    const events = await query(`
+      SELECT e.id, e.title, e.description, e.category, e.type, e.date, e.time, e.location, e.max_participants,
+             d.code as department_code,
+             (SELECT COUNT(*) FROM registrations WHERE event_id = e.id) as registrations_count
+      FROM events e
+      LEFT JOIN departments d ON e.department_id = d.id
+      ORDER BY e.date DESC
+    `);
+    return res.json(events);
+  } catch (error: any) {
+    console.error('Error fetching admin events:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function deleteEvent(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'Event ID required.' });
+
+    await exec('DELETE FROM registrations WHERE event_id = ?', [id]);
+    await exec('DELETE FROM events WHERE id = ?', [id]);
+
+    return res.json({ message: 'Event deleted successfully.' });
+  } catch (error: any) {
+    console.error('Error deleting event:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
 // 4. Transport Management
 export async function manageTransport(req: AuthenticatedRequest, res: Response) {
   try {

@@ -33,6 +33,7 @@ const AdminPanel: React.FC = () => {
   const [analytics, setAnalytics] = useState<any>(null);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [adminEvents, setAdminEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Tab: Student Database filters
@@ -106,10 +107,23 @@ const AdminPanel: React.FC = () => {
 
       const studentsRes = await axios.get('/api/admin/students');
       setStudents(studentsRes.data);
+
+      const eventsRes = await axios.get('/api/admin/events');
+      setAdminEvents(eventsRes.data);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this event? All student bookings for this event will also be removed.')) return;
+    try {
+      await axios.delete(`/api/admin/event/${id}`);
+      fetchAdminData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete event');
     }
   };
 
@@ -748,140 +762,193 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 4: SCHEDULE EVENT */}
+        {/* TAB 4: SCHEDULE EVENT & MANAGE LISTINGS */}
         {activeTab === 'events' && (
-          <div className="max-w-xl glass-card p-6 bg-surface-primary/10 border border-surface-accent/10">
-            <h3 className="text-xs uppercase tracking-widest text-accent font-bold flex items-center gap-1.5 mb-6 border-b border-surface-accent/10 pb-3">
-              <Calendar className="w-4 h-4" /> Schedule New Event
-            </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left: Schedule New Event Form */}
+            <div className="lg:col-span-5 glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 h-fit">
+              <h3 className="text-xs uppercase tracking-widest text-accent font-bold flex items-center gap-1.5 mb-6 border-b border-surface-accent/10 pb-3">
+                <Calendar className="w-4 h-4" /> Schedule New Event
+              </h3>
 
-            {evtSuccess && (
-              <div className="p-3 mb-4 rounded bg-emerald-950/40 border border-emerald-800/30 text-emerald-300 text-xs">
-                {evtSuccess}
-              </div>
-            )}
+              {evtSuccess && (
+                <div className="p-3 mb-4 rounded bg-emerald-950/40 border border-emerald-800/30 text-emerald-300 text-xs">
+                  {evtSuccess}
+                </div>
+              )}
 
-            <form onSubmit={handleCreateEvent} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleCreateEvent} className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Event Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={evtTitle}
+                      onChange={(e) => setEvtTitle(e.target.value)}
+                      placeholder="GameDev Hack Sprint..."
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Category</label>
+                    <select
+                      value={evtCat}
+                      onChange={(e) => setEvtCat(e.target.value)}
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                    >
+                      <option value="Technical">Technical</option>
+                      <option value="Sports">Sports</option>
+                      <option value="Cultural">Cultural</option>
+                      <option value="Innovation">Innovation & Hackathons</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Type</label>
+                    <select
+                      value={evtType}
+                      onChange={(e) => setEvtType(e.target.value)}
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                    >
+                      <option value="Workshop">Workshop</option>
+                      <option value="Hackathon">Hackathon</option>
+                      <option value="Seminar">Seminar</option>
+                      <option value="Event">General Event</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Department Specific</label>
+                    <input
+                      type="text"
+                      value={evtDept}
+                      onChange={(e) => setEvtDept(e.target.value)}
+                      placeholder="CS or EE (optional)"
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono uppercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Date</label>
+                    <input
+                      type="text"
+                      required
+                      value={evtDate}
+                      onChange={(e) => setEvtDate(e.target.value)}
+                      placeholder="2026-07-28"
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Time</label>
+                    <input
+                      type="text"
+                      required
+                      value={evtTime}
+                      onChange={(e) => setEvtTime(e.target.value)}
+                      placeholder="10:00 AM"
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Max Bookings</label>
+                    <input
+                      type="number"
+                      required
+                      value={evtCap}
+                      onChange={(e) => setEvtCap(e.target.value)}
+                      placeholder="100"
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Event Title</label>
+                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Venue Location</label>
                   <input
                     type="text"
                     required
-                    value={evtTitle}
-                    onChange={(e) => setEvtTitle(e.target.value)}
-                    placeholder="GameDev Hack Sprint..."
+                    value={evtLoc}
+                    onChange={(e) => setEvtLoc(e.target.value)}
+                    placeholder="Main Seminar Hall..."
                     className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Category</label>
-                  <select
-                    value={evtCat}
-                    onChange={(e) => setEvtCat(e.target.value)}
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
-                  >
-                    <option value="Technical">Technical</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Cultural">Cultural</option>
-                    <option value="Innovation">Innovation & Hackathons</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Type</label>
-                  <select
-                    value={evtType}
-                    onChange={(e) => setEvtType(e.target.value)}
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
-                  >
-                    <option value="Workshop">Workshop</option>
-                    <option value="Hackathon">Hackathon</option>
-                    <option value="Seminar">Seminar</option>
-                    <option value="Event">General Event</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Department Specific</label>
-                  <input
-                    type="text"
-                    value={evtDept}
-                    onChange={(e) => setEvtDept(e.target.value)}
-                    placeholder="CS or EE (optional)"
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono uppercase"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Date</label>
-                  <input
-                    type="text"
+                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Short Description</label>
+                  <textarea
                     required
-                    value={evtDate}
-                    onChange={(e) => setEvtDate(e.target.value)}
-                    placeholder="2026-07-28"
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono"
-                  />
+                    rows={3}
+                    value={evtDesc}
+                    onChange={(e) => setEvtDesc(e.target.value)}
+                    placeholder="Outline the event program agenda..."
+                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent resize-none"
+                  ></textarea>
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Time</label>
-                  <input
-                    type="text"
-                    required
-                    value={evtTime}
-                    onChange={(e) => setEvtTime(e.target.value)}
-                    placeholder="10:00 AM"
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Max Bookings</label>
-                  <input
-                    type="number"
-                    required
-                    value={evtCap}
-                    onChange={(e) => setEvtCap(e.target.value)}
-                    placeholder="100"
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent"
-                  />
-                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-btn-gradient text-midnight font-bold py-2.5 rounded hover:opacity-90 active:scale-[0.99] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4" /> Create Event Listing
+                </button>
+              </form>
+            </div>
+
+            {/* Right: Active Scheduled Events Directory */}
+            <div className="lg:col-span-7 glass-card p-6 bg-surface-primary/10 border border-surface-accent/10 space-y-4">
+              <div className="flex justify-between items-center border-b border-surface-accent/10 pb-3">
+                <h3 className="text-xs uppercase tracking-widest text-accent font-extrabold flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" /> Active Scheduled Events Directory ({adminEvents.length})
+                </h3>
+                <span className="text-[10px] text-surface-accent">Click Delete to remove an event</span>
               </div>
 
-              <div>
-                <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Venue Location</label>
-                <input
-                  type="text"
-                  required
-                  value={evtLoc}
-                  onChange={(e) => setEvtLoc(e.target.value)}
-                  placeholder="Main Seminar Hall..."
-                  className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent"
-                />
-              </div>
+              {adminEvents.length === 0 ? (
+                <div className="py-12 text-center text-xs text-surface-accent">
+                  No scheduled events found in the database.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                  {adminEvents.map((evt: any) => (
+                    <div key={evt.id} className="p-4 bg-midnight/40 border border-surface-accent/15 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-surface-accent/30 transition-all">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-warm-white text-sm">{evt.title}</span>
+                          <span className="px-2 py-0.2 rounded text-[9px] font-mono font-bold bg-accent/15 text-accent border border-accent/20">
+                            {evt.category}
+                          </span>
+                          {evt.department_code && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                              {evt.department_code}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-surface-accent line-clamp-1">{evt.description}</p>
+                        <div className="flex items-center gap-3 text-[10px] font-mono text-surface-accent">
+                          <span>📅 {evt.date} • ⏰ {evt.time}</span>
+                          <span>📍 {evt.location}</span>
+                          <span className="text-emerald-400 font-semibold">🎟️ {evt.registrations_count} Booked / {evt.max_participants || 100}</span>
+                        </div>
+                      </div>
 
-              <div>
-                <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Short Description</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={evtDesc}
-                  onChange={(e) => setEvtDesc(e.target.value)}
-                  placeholder="Outline the event program agenda..."
-                  className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent resize-none"
-                ></textarea>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-btn-gradient text-midnight font-bold py-2.5 rounded hover:opacity-90 active:scale-[0.99] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <PlusCircle className="w-4 h-4" /> Create Event Listing
-              </button>
-            </form>
+                      <button
+                        onClick={() => handleDeleteEvent(evt.id)}
+                        className="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/40 text-rose-300 rounded text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 self-end sm:self-center"
+                        title="Delete Event"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
