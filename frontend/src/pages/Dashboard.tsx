@@ -106,11 +106,15 @@ const Dashboard: React.FC = () => {
         <div className="flex gap-2 flex-wrap">
           <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
             <p className="text-[9px] uppercase tracking-widest text-surface-accent">Current GPA</p>
-            <p className="text-lg font-bold text-accent font-mono mt-0.5">9.20</p>
+            <p className="text-lg font-bold text-accent font-mono mt-0.5">
+              {data?.academicMetrics?.cgpa ? Number(data.academicMetrics.cgpa).toFixed(2) : '8.80'}
+            </p>
           </div>
           <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
             <p className="text-[9px] uppercase tracking-widest text-surface-accent">Attendance</p>
-            <p className="text-lg font-bold text-accent font-mono mt-0.5">92%</p>
+            <p className="text-lg font-bold text-accent font-mono mt-0.5">
+              {data?.academicMetrics?.attendancePercentage ?? 95}%
+            </p>
           </div>
           {data?.leetcodeStats && (
             <div className="px-4 py-2 bg-midnight/60 border border-amber-500/30 rounded text-center">

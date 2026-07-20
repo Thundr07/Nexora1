@@ -760,4 +760,40 @@ async function runMigrationsAndSeed() {
   } catch (err) {
     console.error('Error auto-seeding leaderboard stats:', err);
   }
+
+  // Ensure every student has baseline marks and attendance records for dynamic calculations
+  try {
+    const studentsWithoutMarks = await query(`
+      SELECT s.id, s.department_id, s.semester 
+      FROM students s 
+      LEFT JOIN marks m ON s.id = m.student_id 
+      WHERE s.role != 'admin' AND m.id IS NULL
+    `);
+    
+    for (const student of studentsWithoutMarks) {
+      const deptsSubs = await query('SELECT id FROM subjects WHERE department_id = ? OR semester = ? LIMIT 2', [student.department_id, student.semester]);
+      const subId = deptsSubs.length > 0 ? deptsSubs[0].id : 1;
+      await exec('INSERT INTO marks (student_id, subject_id, type, score, max_score) VALUES (?, ?, ?, ?, ?)', [student.id, subId, 'Internal 1', 23.0, 25]);
+      await exec('INSERT INTO marks (student_id, subject_id, type, score, max_score) VALUES (?, ?, ?, ?, ?)', [student.id, subId, 'Internal 2', 22.5, 25]);
+    }
+
+    const studentsWithoutAttendance = await query(`
+      SELECT s.id, s.department_id, s.semester 
+      FROM students s 
+      LEFT JOIN attendance a ON s.id = a.student_id 
+      WHERE s.role != 'admin' AND a.id IS NULL
+    `);
+
+    for (const student of studentsWithoutAttendance) {
+      const deptsSubs = await query('SELECT id FROM subjects WHERE department_id = ? OR semester = ? LIMIT 1', [student.department_id, student.semester]);
+      const subId = deptsSubs.length > 0 ? deptsSubs[0].id : 1;
+      await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-10', 'Present']);
+      await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-12', 'Present']);
+      await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-14', 'Present']);
+      await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-15', 'Absent']);
+      await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-16', 'Present']);
+    }
+  } catch (err) {
+    console.error('Error auto-seeding baseline marks/attendance:', err);
+  }
 }

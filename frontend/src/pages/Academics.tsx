@@ -71,7 +71,7 @@ const Academics: React.FC = () => {
         <div className="glass-card p-6 flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase tracking-widest text-surface-accent font-bold">Cumulative GPA</span>
-            <h3 className="text-4xl font-extrabold text-warm-white tracking-tight mt-1">{data?.cgpa.toFixed(2)}</h3>
+            <h3 className="text-4xl font-extrabold text-warm-white tracking-tight mt-1">{Number(data?.cgpa ?? 8.80).toFixed(2)}</h3>
             <p className="text-[11px] text-accent mt-1 flex items-center gap-1">
               <Award className="w-3.5 h-3.5" /> Top 5% of Department
             </p>

@@ -104,12 +104,41 @@ export async function getDashboard(req: AuthenticatedRequest, res: Response) {
       upcoming_events: JSON.parse(club.upcoming_events_json || '[]')
     }));
 
+    // 6. Dynamic Academic Metrics
+    const cgpaQuery = await query(`
+      SELECT AVG(score / max_score) * 10 as calc_cgpa
+      FROM marks
+      WHERE student_id = ?
+    `, [studentId]);
+    const dynamicCgpa = cgpaQuery[0]?.calc_cgpa !== null && cgpaQuery[0]?.calc_cgpa !== undefined
+      ? parseFloat(Number(cgpaQuery[0].calc_cgpa).toFixed(2))
+      : 8.80;
+
+    const attendanceRecords = await query(`
+      SELECT status, count(*) as count 
+      FROM attendance 
+      WHERE student_id = ?
+      GROUP BY status
+    `, [studentId]);
+    let present = 0, absent = 0, late = 0;
+    attendanceRecords.forEach((record: any) => {
+      if (record.status === 'Present') present = record.count;
+      else if (record.status === 'Absent') absent = record.count;
+      else if (record.status === 'Late') late = record.count;
+    });
+    const totalClasses = present + absent + late;
+    const attendancePercentage = totalClasses > 0 ? Math.round(((present + late * 0.5) / totalClasses) * 100) : 100;
+
     return res.json({
       timetable,
       announcements,
       events,
       busRoutes,
       clubs: parsedClubs,
+      academicMetrics: {
+        cgpa: dynamicCgpa,
+        attendancePercentage
+      },
       leetcodeStats: isComputingBranch ? {
         ...studentInfo,
         branchRank: leetcodeRank,
@@ -129,13 +158,23 @@ export async function getAcademics(req: AuthenticatedRequest, res: Response) {
     const deptId = req.user.department_id;
     const sem = req.user.semester;
 
-    // 1. Marks
+    // 1. Marks & Dynamic CGPA Calculation
     const marks = await query(`
       SELECT m.id, m.type, m.score, m.max_score, s.name as subject_name, s.code as subject_code
       FROM marks m
       JOIN subjects s ON m.subject_id = s.id
       WHERE m.student_id = ?
     `, [studentId]);
+
+    const cgpaQuery = await query(`
+      SELECT AVG(score / max_score) * 10 as calc_cgpa
+      FROM marks
+      WHERE student_id = ?
+    `, [studentId]);
+
+    const dynamicCgpa = cgpaQuery[0]?.calc_cgpa !== null && cgpaQuery[0]?.calc_cgpa !== undefined
+      ? parseFloat(Number(cgpaQuery[0].calc_cgpa).toFixed(2))
+      : 8.80;
 
     // 2. Attendance & Percentage calculation
     const attendanceRecords = await query(`
@@ -163,14 +202,12 @@ export async function getAcademics(req: AuthenticatedRequest, res: Response) {
       ORDER BY a.due_date ASC
     `, [deptId, sem]);
 
-    // Mock Performance trends over semesters (since database holds current, we provide historic)
-    const trends = [
-      { semester: 'Semester 1', GPA: 8.4 },
-      { semester: 'Semester 2', GPA: 8.7 },
-      { semester: 'Semester 3', GPA: 8.9 },
-      { semester: 'Semester 4', GPA: 9.1 },
-      { semester: 'Semester 5', GPA: 9.2 }
-    ].slice(0, sem);
+    // Mock Performance trends over semesters
+    const baseGpa = dynamicCgpa > 0 ? dynamicCgpa : 8.5;
+    const trends = Array.from({ length: Math.min(sem, 8) }, (_, i) => ({
+      semester: `Semester ${i + 1}`,
+      GPA: parseFloat(Math.min(10.0, Math.max(6.0, baseGpa - (sem - (i + 1)) * 0.15)).toFixed(2))
+    }));
 
     return res.json({
       marks,
@@ -182,7 +219,7 @@ export async function getAcademics(req: AuthenticatedRequest, res: Response) {
         total: totalClasses
       },
       assignments,
-      cgpa: 9.2, // Hardcoded for demo/seed reference
+      cgpa: dynamicCgpa,
       trends
     });
   } catch (error: any) {

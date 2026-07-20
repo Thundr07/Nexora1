@@ -17,7 +17,9 @@ import {
   MapPin,
   Mail,
   UserCheck,
-  Trash2
+  Trash2,
+  GraduationCap,
+  Search
 } from 'lucide-react';
 
 const AdminPanel: React.FC = () => {
@@ -32,6 +34,11 @@ const AdminPanel: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Tab: Student Database filters
+  const [studentDeptFilter, setStudentDeptFilter] = useState('');
+  const [studentYearFilter, setStudentYearFilter] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Tab: Freshers filters
   const [fresherDeptFilter, setFresherDeptFilter] = useState('');
@@ -307,6 +314,7 @@ const AdminPanel: React.FC = () => {
       <div className="flex border-b border-surface-accent/15 gap-6 overflow-x-auto">
         {[
           { id: 'analytics', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'students', label: 'Student Database', icon: <GraduationCap className="w-4 h-4" /> },
           { id: 'freshers', label: 'Freshers Monitor', icon: <Users className="w-4 h-4" /> },
           { id: 'announcements', label: 'News Broadcast', icon: <Megaphone className="w-4 h-4" /> },
           { id: 'events', label: 'Events Scheduler', icon: <Calendar className="w-4 h-4" /> },
@@ -331,6 +339,170 @@ const AdminPanel: React.FC = () => {
       {/* TABS CONTENT */}
       <div className="mt-6">
         
+        {/* TAB: STUDENT DATABASE & PERFORMANCE DIRECTORY */}
+        {activeTab === 'students' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="text-sm uppercase font-bold tracking-widest text-accent flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4" /> Registered Students Database
+                </h3>
+                <p className="text-surface-accent text-xs mt-1">
+                  View and inspect live dynamic CGPA, attendance percentages, and academic statistics for all registered students.
+                </p>
+              </div>
+            </div>
+
+            {/* SUMMARY CARDS */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="glass-card p-4 border border-surface-accent/15">
+                <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Total Registered</span>
+                <div className="text-2xl font-black text-warm-white mt-1 font-mono">{students.length}</div>
+                <p className="text-[11px] text-surface-accent mt-0.5">Enrolled students</p>
+              </div>
+              <div className="glass-card p-4 border border-surface-accent/15">
+                <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Campus Avg CGPA</span>
+                <div className="text-2xl font-black text-accent mt-1 font-mono">
+                  {(students.reduce((acc, s) => acc + (s.cgpa || 0), 0) / (students.length || 1)).toFixed(2)}
+                </div>
+                <p className="text-[11px] text-surface-accent mt-0.5">Scale 10.0</p>
+              </div>
+              <div className="glass-card p-4 border border-surface-accent/15">
+                <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">Campus Avg Attendance</span>
+                <div className="text-2xl font-black text-emerald-400 mt-1 font-mono">
+                  {Math.round(students.reduce((acc, s) => acc + (s.attendanceRate || 0), 0) / (students.length || 1))}%
+                </div>
+                <p className="text-[11px] text-surface-accent mt-0.5">Live class attendance</p>
+              </div>
+              <div className="glass-card p-4 border border-surface-accent/15">
+                <span className="text-[10px] font-extrabold uppercase text-surface-accent tracking-wider">High Honors (CGPA 9.0+)</span>
+                <div className="text-2xl font-black text-amber-400 mt-1 font-mono">
+                  {students.filter(s => (s.cgpa || 0) >= 9.0).length}
+                </div>
+                <p className="text-[11px] text-surface-accent mt-0.5">Top performing students</p>
+              </div>
+            </div>
+
+            {/* FILTER BAR */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-primary/10 p-4 border border-surface-accent/10 rounded-lg text-xs">
+              <div className="relative w-full md:w-72">
+                <Search className="w-4 h-4 text-surface-accent absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search Name, Roll No, Email..."
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  className="w-full bg-surface-primary/30 border border-surface-accent/20 rounded pl-9 pr-3 py-2 text-warm-white focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2 items-center">
+                <select
+                  value={studentDeptFilter}
+                  onChange={(e) => setStudentDeptFilter(e.target.value)}
+                  className="bg-surface-primary/30 border border-surface-accent/20 rounded px-3 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                >
+                  <option value="">All Departments</option>
+                  <option value="CS">Computer Science (CS)</option>
+                  <option value="EE">Electrical (EE)</option>
+                  <option value="ME">Mechanical (ME)</option>
+                  <option value="IT">Information Tech (IT)</option>
+                  <option value="AIDS">AI & Data Science (AIDS)</option>
+                </select>
+
+                <select
+                  value={studentYearFilter}
+                  onChange={(e) => setStudentYearFilter(e.target.value)}
+                  className="bg-surface-primary/30 border border-surface-accent/20 rounded px-3 py-2 text-warm-white focus:outline-none focus:border-accent cursor-pointer"
+                >
+                  <option value="">All Years</option>
+                  <option value="1">Year 1 (Freshmen)</option>
+                  <option value="2">Year 2 (Sophomores)</option>
+                  <option value="3">Year 3 (Juniors)</option>
+                  <option value="4">Year 4 (Seniors)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* TABLE */}
+            <div className="glass-card p-6 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-surface-accent/15 text-surface-accent uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 font-semibold">Roll Number</th>
+                      <th className="pb-3 font-semibold">Student Name</th>
+                      <th className="pb-3 font-semibold">Department</th>
+                      <th className="pb-3 font-semibold">Year & Semester</th>
+                      <th className="pb-3 font-semibold text-center">Dynamic CGPA</th>
+                      <th className="pb-3 font-semibold text-center">Attendance Rate</th>
+                      <th className="pb-3 font-semibold text-right">Role</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-primary/30 text-warm-white">
+                    {students
+                      .filter(s => {
+                        const matchDept = studentDeptFilter ? s.departmentCode === studentDeptFilter : true;
+                        const matchYear = studentYearFilter ? String(s.year) === studentYearFilter : true;
+                        const matchSearch = studentSearch
+                          ? s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                            s.rollNumber.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                            s.email.toLowerCase().includes(studentSearch.toLowerCase())
+                          : true;
+                        return matchDept && matchYear && matchSearch;
+                      })
+                      .map((s, idx) => (
+                        <tr key={idx} className="hover:bg-surface-primary/5 transition-colors">
+                          <td className="py-3 font-mono font-semibold text-accent">{s.rollNumber}</td>
+                          <td className="py-3 font-bold">
+                            <div>
+                              <span>{s.name}</span>
+                              <div className="text-[10px] text-surface-accent font-normal font-mono">{s.email}</div>
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-surface-accent/20 text-accent">
+                              {s.departmentCode}
+                            </span>
+                          </td>
+                          <td className="py-3 font-mono text-surface-accent">
+                            Year {s.year} (Sem {s.semester})
+                          </td>
+                          <td className="py-3 text-center font-mono font-black">
+                            <span className={`px-2 py-0.5 rounded text-xs ${
+                              s.cgpa >= 9.0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                              s.cgpa >= 8.0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                              'bg-surface-accent/20 text-warm-white'
+                            }`}>
+                              {Number(s.cgpa || 0).toFixed(2)} / 10.0
+                            </span>
+                          </td>
+                          <td className="py-3 text-center font-mono font-bold">
+                            <div className="flex flex-col items-center">
+                              <span className={s.attendanceRate >= 85 ? 'text-emerald-400' : s.attendanceRate >= 75 ? 'text-amber-400' : 'text-rose-400'}>
+                                {s.attendanceRate}%
+                              </span>
+                              <span className="text-[9px] text-surface-accent font-normal">
+                                ({s.totalClasses} classes)
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 text-right font-mono">
+                            <span className={`px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-extrabold ${
+                              s.role === 'admin' ? 'bg-rose-950 text-rose-400 border border-rose-800/30' : 'bg-midnight text-surface-accent border border-surface-accent/15'
+                            }`}>
+                              {s.role}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* TAB 1: ANALYTICS OVERVIEW */}
         {activeTab === 'analytics' && (
           <div className="space-y-8">

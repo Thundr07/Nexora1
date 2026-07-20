@@ -226,9 +226,9 @@ export async function getStudents(req: AuthenticatedRequest, res: Response) {
   try {
     const students = await query(`
       SELECT s.id, s.name, s.roll_number, s.year, s.semester, s.email, s.role, d.name as department_name, d.code as department_code,
-             (SELECT COUNT(*) FROM attendance WHERE student_id = s.id AND status = 'Present') as present_classes,
+             (SELECT COUNT(*) FROM attendance WHERE student_id = s.id AND (status = 'Present' OR status = 'Late')) as present_classes,
              (SELECT COUNT(*) FROM attendance WHERE student_id = s.id) as total_classes,
-             (SELECT AVG(score / max_score) * 100 FROM marks WHERE student_id = s.id) as avg_marks_percentage
+             (SELECT AVG(score / max_score) * 10 FROM marks WHERE student_id = s.id) as avg_marks_gpa
       FROM students s
       JOIN departments d ON s.department_id = d.id
       ORDER BY s.roll_number
@@ -239,9 +239,9 @@ export async function getStudents(req: AuthenticatedRequest, res: Response) {
         ? Math.round((s.present_classes / s.total_classes) * 100) 
         : 100;
       
-      const academicGpa = s.avg_marks_percentage !== null 
-        ? parseFloat(((s.avg_marks_percentage / 10).toFixed(2))) 
-        : 9.0;
+      const academicGpa = s.avg_marks_gpa !== null && s.avg_marks_gpa !== undefined
+        ? parseFloat(Number(s.avg_marks_gpa).toFixed(2)) 
+        : 8.50;
 
       return {
         id: s.id,
@@ -254,6 +254,7 @@ export async function getStudents(req: AuthenticatedRequest, res: Response) {
         departmentName: s.department_name,
         departmentCode: s.department_code,
         attendanceRate,
+        totalClasses: s.total_classes || 0,
         cgpa: academicGpa
       };
     });
