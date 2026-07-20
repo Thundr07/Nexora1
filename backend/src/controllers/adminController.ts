@@ -12,12 +12,12 @@ export async function getAnalytics(req: AuthenticatedRequest, res: Response) {
     
     const feedbackStatus = await query('SELECT status, COUNT(*) as count FROM feedback GROUP BY status');
     const eventPopularity = await query(`
-      SELECT e.title, COUNT(r.id) as registrations
+      SELECT e.id, e.title, COUNT(r.id) as registrations
       FROM events e
       LEFT JOIN registrations r ON e.id = r.event_id
       GROUP BY e.id, e.title
       ORDER BY registrations DESC
-      LIMIT 5
+      LIMIT 10
     `);
 
     return res.json({
@@ -80,7 +80,7 @@ export async function createAnnouncement(req: AuthenticatedRequest, res: Respons
 // 3. Create Event
 export async function createEvent(req: AuthenticatedRequest, res: Response) {
   try {
-    const { title, description, category, type, date, time, location, departmentCode, maxParticipants } = req.body;
+    const { title, description, category, type, date, time, location, departmentCode, maxParticipants, imageUrl } = req.body;
     if (!title || !description || !category || !type || !date || !time || !location) {
       return res.status(400).json({ error: 'All primary event details are required.' });
     }
@@ -91,10 +91,18 @@ export async function createEvent(req: AuthenticatedRequest, res: Response) {
       if (depts.length > 0) departmentId = depts[0].id;
     }
 
+    const defaultPoster = category === 'Sports' 
+      ? 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop'
+      : category === 'Cultural'
+      ? 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800&auto=format&fit=crop'
+      : 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop';
+
+    const poster = (imageUrl && imageUrl.trim()) ? imageUrl.trim() : defaultPoster;
+
     const { insertId } = await exec(`
-      INSERT INTO events (title, description, category, type, date, time, location, department_id, max_participants)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [title, description, category, type, date, time, location, departmentId, maxParticipants || 100]);
+      INSERT INTO events (title, description, category, type, date, time, location, department_id, max_participants, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [title, description, category, type, date, time, location, departmentId, maxParticipants || 100, poster]);
 
     return res.status(201).json({ id: insertId, message: 'Event created successfully.' });
   } catch (error: any) {
@@ -106,7 +114,7 @@ export async function createEvent(req: AuthenticatedRequest, res: Response) {
 export async function getAdminEvents(req: AuthenticatedRequest, res: Response) {
   try {
     const events = await query(`
-      SELECT e.id, e.title, e.description, e.category, e.type, e.date, e.time, e.location, e.max_participants,
+      SELECT e.id, e.title, e.description, e.category, e.type, e.date, e.time, e.location, e.max_participants, e.image_url,
              d.code as department_code,
              (SELECT COUNT(*) FROM registrations WHERE event_id = e.id) as registrations_count
       FROM events e
@@ -124,9 +132,10 @@ export async function deleteEvent(req: AuthenticatedRequest, res: Response) {
   try {
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'Event ID required.' });
+    const eventId = parseInt(id, 10);
 
-    await exec('DELETE FROM registrations WHERE event_id = ?', [id]);
-    await exec('DELETE FROM events WHERE id = ?', [id]);
+    await exec('DELETE FROM registrations WHERE event_id = ?', [eventId]);
+    await exec('DELETE FROM events WHERE id = ?', [eventId]);
 
     return res.json({ message: 'Event deleted successfully.' });
   } catch (error: any) {

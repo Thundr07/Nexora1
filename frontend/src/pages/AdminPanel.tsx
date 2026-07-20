@@ -62,6 +62,7 @@ const AdminPanel: React.FC = () => {
   const [evtLoc, setEvtLoc] = useState('');
   const [evtDept, setEvtDept] = useState('');
   const [evtCap, setEvtCap] = useState('100');
+  const [evtImgUrl, setEvtImgUrl] = useState('');
   const [evtSuccess, setEvtSuccess] = useState<string | null>(null);
 
   // Tab: Timetable Schedule Form
@@ -193,7 +194,8 @@ const AdminPanel: React.FC = () => {
         time: evtTime,
         location: evtLoc,
         departmentCode: evtDept || null,
-        maxParticipants: parseInt(evtCap)
+        maxParticipants: parseInt(evtCap),
+        imageUrl: evtImgUrl
       });
       setEvtSuccess('Event added successfully!');
       setEvtTitle('');
@@ -202,6 +204,7 @@ const AdminPanel: React.FC = () => {
       setEvtTime('');
       setEvtLoc('');
       setEvtDept('');
+      setEvtImgUrl('');
       fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Event creation failed');
@@ -543,11 +546,20 @@ const AdminPanel: React.FC = () => {
                 </h3>
                 <div className="divide-y divide-surface-primary/30 text-xs">
                   {analytics?.eventPopularity?.map((evt: any, idx: number) => (
-                    <div key={idx} className="py-3 flex justify-between items-center">
-                      <span className="font-bold text-warm-white">{evt.title}</span>
-                      <span className="font-mono text-accent bg-surface-primary/40 px-2 py-0.5 rounded font-black">
-                        {evt.registrations} Booked
-                      </span>
+                    <div key={idx} className="py-3 flex justify-between items-center gap-2">
+                      <span className="font-bold text-warm-white truncate">{evt.title}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-mono text-accent bg-surface-primary/40 px-2 py-0.5 rounded font-black">
+                          {evt.registrations} Booked
+                        </span>
+                        <button
+                          onClick={() => handleDeleteEvent(evt.id)}
+                          className="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/40 text-rose-300 rounded text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                          title="Delete Event"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -880,6 +892,49 @@ const AdminPanel: React.FC = () => {
                 </div>
 
                 <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">
+                    Event Poster Image URL (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={evtImgUrl}
+                    onChange={(e) => setEvtImgUrl(e.target.value)}
+                    placeholder="https://images.unsplash.com/... or click a preset below"
+                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent text-xs font-mono"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setEvtImgUrl('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop')}
+                      className="px-2 py-0.5 bg-surface-primary/30 hover:bg-accent/20 border border-surface-accent/20 text-[9px] rounded text-surface-accent hover:text-accent transition-all cursor-pointer"
+                    >
+                      🖼️ Hackathon
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEvtImgUrl('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800&auto=format&fit=crop')}
+                      className="px-2 py-0.5 bg-surface-primary/30 hover:bg-accent/20 border border-surface-accent/20 text-[9px] rounded text-surface-accent hover:text-accent transition-all cursor-pointer"
+                    >
+                      🖼️ Workshop
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEvtImgUrl('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop')}
+                      className="px-2 py-0.5 bg-surface-primary/30 hover:bg-accent/20 border border-surface-accent/20 text-[9px] rounded text-surface-accent hover:text-accent transition-all cursor-pointer"
+                    >
+                      🖼️ Sports
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEvtImgUrl('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800&auto=format&fit=crop')}
+                      className="px-2 py-0.5 bg-surface-primary/30 hover:bg-accent/20 border border-surface-accent/20 text-[9px] rounded text-surface-accent hover:text-accent transition-all cursor-pointer"
+                    >
+                      🖼️ Cultural
+                    </button>
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">Short Description</label>
                   <textarea
                     required
@@ -917,23 +972,32 @@ const AdminPanel: React.FC = () => {
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
                   {adminEvents.map((evt: any) => (
                     <div key={evt.id} className="p-4 bg-midnight/40 border border-surface-accent/15 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-surface-accent/30 transition-all">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-warm-white text-sm">{evt.title}</span>
-                          <span className="px-2 py-0.2 rounded text-[9px] font-mono font-bold bg-accent/15 text-accent border border-accent/20">
-                            {evt.category}
-                          </span>
-                          {evt.department_code && (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                              {evt.department_code}
+                      <div className="flex items-center gap-3">
+                        {evt.image_url && (
+                          <img
+                            src={evt.image_url}
+                            alt={evt.title}
+                            className="w-16 h-16 rounded object-cover border border-surface-accent/20 shrink-0 bg-surface-primary"
+                          />
+                        )}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-warm-white text-sm">{evt.title}</span>
+                            <span className="px-2 py-0.2 rounded text-[9px] font-mono font-bold bg-accent/15 text-accent border border-accent/20">
+                              {evt.category}
                             </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-surface-accent line-clamp-1">{evt.description}</p>
-                        <div className="flex items-center gap-3 text-[10px] font-mono text-surface-accent">
-                          <span>📅 {evt.date} • ⏰ {evt.time}</span>
-                          <span>📍 {evt.location}</span>
-                          <span className="text-emerald-400 font-semibold">🎟️ {evt.registrations_count} Booked / {evt.max_participants || 100}</span>
+                            {evt.department_code && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                                {evt.department_code}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-surface-accent line-clamp-1">{evt.description}</p>
+                          <div className="flex items-center gap-3 text-[10px] font-mono text-surface-accent">
+                            <span>📅 {evt.date} • ⏰ {evt.time}</span>
+                            <span>📍 {evt.location}</span>
+                            <span className="text-emerald-400 font-semibold">🎟️ {evt.registrations_count} Booked / {evt.max_participants || 100}</span>
+                          </div>
                         </div>
                       </div>
 

@@ -200,40 +200,61 @@ const ForYou: React.FC = () => {
               <p className="text-xs text-surface-accent py-4 col-span-2 text-center">No active department events listed.</p>
             ) : (
               events.map((evt: any) => (
-                <div key={evt.id} className="bg-midnight/30 p-4 rounded border border-surface-accent/10 flex flex-col justify-between h-48 space-y-2">
-                  <div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] uppercase font-bold text-accent font-mono">{evt.category}</span>
-                      <span className="text-[9px] text-surface-accent font-mono">{evt.date}</span>
+                <div key={evt.id} className="bg-midnight/40 rounded-lg border border-surface-accent/15 flex flex-col justify-between overflow-hidden group hover:border-surface-accent/30 transition-all">
+                  {evt.image_url && (
+                    <div className="h-24 w-full relative overflow-hidden bg-surface-primary">
+                      <img
+                        src={evt.image_url}
+                        alt={evt.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-midnight/90 via-midnight/30 to-transparent"></div>
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[9px] uppercase font-bold bg-midnight/80 text-accent backdrop-blur-md border border-accent/20">
+                        {evt.category}
+                      </span>
+                      <span className="absolute top-2 right-2 text-[9px] text-warm-white font-mono bg-midnight/80 px-2 py-0.5 rounded backdrop-blur-md">
+                        {evt.date}
+                      </span>
                     </div>
-                    <h4 className="text-xs font-bold text-warm-white mt-1.5 leading-snug line-clamp-1">{evt.title}</h4>
-                    <p className="text-[10px] text-surface-accent mt-1 leading-relaxed line-clamp-2">{evt.description}</p>
-                  </div>
+                  )}
 
-                  <div className="space-y-2 pt-2 border-t border-surface-accent/5">
-                    <div className="flex justify-between items-center text-[9px] text-surface-accent font-mono">
-                      <span>📍 {evt.location}</span>
-                      <span>👥 {evt.current_participants}/{evt.max_participants}</span>
-                    </div>
-                    <button
-                      disabled={evt.registered || regLoading === evt.id}
-                      onClick={() => handleRegister(evt.id)}
-                      className={`w-full py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-                        evt.registered
-                          ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/30'
-                          : 'bg-btn-gradient text-midnight hover:opacity-90'
-                      }`}
-                    >
-                      {regLoading === evt.id ? (
-                        <div className="w-3 h-3 border-2 border-midnight border-t-transparent rounded-full animate-spin"></div>
-                      ) : evt.registered ? (
-                        <>
-                          <CheckCircle2 className="w-3 h-3" /> Registered
-                        </>
-                      ) : (
-                        'Register Spot'
+                  <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                    <div>
+                      {!evt.image_url && (
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[9px] uppercase font-bold text-accent font-mono">{evt.category}</span>
+                          <span className="text-[9px] text-surface-accent font-mono">{evt.date}</span>
+                        </div>
                       )}
-                    </button>
+                      <h4 className="text-xs font-bold text-warm-white leading-snug line-clamp-1 group-hover:text-accent transition-colors">{evt.title}</h4>
+                      <p className="text-[10px] text-surface-accent mt-1 leading-relaxed line-clamp-2">{evt.description}</p>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-surface-accent/10">
+                      <div className="flex justify-between items-center text-[9px] text-surface-accent font-mono">
+                        <span className="truncate">📍 {evt.location}</span>
+                        <span className="shrink-0 font-bold text-emerald-400">🎟️ {evt.current_participants}/{evt.max_participants || 100}</span>
+                      </div>
+                      <button
+                        disabled={evt.registered || regLoading === evt.id}
+                        onClick={() => handleRegister(evt.id)}
+                        className={`w-full py-1.5 rounded text-[10px] uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          evt.registered
+                            ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/30 cursor-default'
+                            : 'bg-btn-gradient text-midnight hover:opacity-90 active:scale-[0.99]'
+                        }`}
+                      >
+                        {regLoading === evt.id ? (
+                          <div className="w-3 h-3 border-2 border-midnight border-t-transparent rounded-full animate-spin"></div>
+                        ) : evt.registered ? (
+                          <>
+                            <CheckCircle2 className="w-3 h-3" /> Registered
+                          </>
+                        ) : (
+                          'Register Spot'
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
