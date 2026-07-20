@@ -793,6 +793,14 @@ async function runMigrationsAndSeed() {
       await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-15', 'Absent']);
       await exec('INSERT INTO attendance (student_id, subject_id, date, status) VALUES (?, ?, ?, ?)', [student.id, subId, '2026-07-16', 'Present']);
     }
+
+    // Clean up any marks, attendance, or leaderboard entries for admin users
+    const admins = await query("SELECT id FROM students WHERE role = 'admin'");
+    for (const admin of admins) {
+      await exec("DELETE FROM marks WHERE student_id = ?", [admin.id]);
+      await exec("DELETE FROM attendance WHERE student_id = ?", [admin.id]);
+      await exec("DELETE FROM leaderboard WHERE student_id = ?", [admin.id]);
+    }
   } catch (err) {
     console.error('Error auto-seeding baseline marks/attendance:', err);
   }

@@ -231,6 +231,7 @@ export async function getStudents(req: AuthenticatedRequest, res: Response) {
              (SELECT AVG(score / max_score) * 10 FROM marks WHERE student_id = s.id) as avg_marks_gpa
       FROM students s
       JOIN departments d ON s.department_id = d.id
+      WHERE s.role != 'admin'
       ORDER BY s.roll_number
     `);
 

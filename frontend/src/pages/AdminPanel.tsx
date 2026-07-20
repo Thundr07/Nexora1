@@ -281,7 +281,7 @@ const AdminPanel: React.FC = () => {
 
   // Filter freshers (Year 1 students)
   const freshersList = students.filter(s => {
-    const isFresher = s.year === 1;
+    const isFresher = s.year === 1 && s.role !== 'admin';
     const matchesDept = fresherDeptFilter ? s.departmentCode === fresherDeptFilter : true;
     const matchesSearch = fresherSearch 
       ? s.name.toLowerCase().includes(fresherSearch.toLowerCase()) || s.rollNumber.toLowerCase().includes(fresherSearch.toLowerCase())
