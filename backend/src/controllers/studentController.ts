@@ -48,6 +48,52 @@ export async function getDashboard(req: AuthenticatedRequest, res: Response) {
       ORDER BY e.date ASC
     `, [studentId]);
 
+    // 6. Student LeetCode Info & Branch Rank
+    const studentData = await query(`
+      SELECT s.id, s.name, s.roll_number, s.leetcode_handle, 
+             COALESCE(s.leetcode_solved, 0) as leetcode_solved,
+             COALESCE(s.leetcode_easy, 0) as leetcode_easy,
+             COALESCE(s.leetcode_medium, 0) as leetcode_medium,
+             COALESCE(s.leetcode_hard, 0) as leetcode_hard,
+             COALESCE(s.leetcode_rating, 1500) as leetcode_rating,
+             COALESCE(s.leetcode_ranking, 0) as leetcode_ranking,
+             d.code as dept_code, d.name as dept_name
+      FROM students s
+      JOIN departments d ON s.department_id = d.id
+      WHERE s.id = ?
+    `, [studentId]);
+
+    const studentInfo = studentData[0] || {};
+    const isComputingBranch = ['CS', 'IT', 'AIDS'].includes(studentInfo.dept_code);
+
+    let leetcodeRank = null;
+    let topComputingCoders: any[] = [];
+
+    if (isComputingBranch) {
+      if (studentInfo.leetcode_handle) {
+        const rankQuery = await query(`
+          SELECT COUNT(*) + 1 as rank
+          FROM students s
+          JOIN departments d ON s.department_id = d.id
+          WHERE d.code IN ('CS', 'IT', 'AIDS') AND s.role != 'admin'
+            AND (s.leetcode_solved > ? OR (s.leetcode_solved = ? AND s.leetcode_rating > ?))
+        `, [studentInfo.leetcode_solved || 0, studentInfo.leetcode_solved || 0, studentInfo.leetcode_rating || 0]);
+        leetcodeRank = rankQuery[0]?.rank || 1;
+      }
+
+      topComputingCoders = await query(`
+        SELECT s.name as student_name, s.roll_number, s.leetcode_handle, 
+               COALESCE(s.leetcode_solved, 0) as leetcode_solved,
+               COALESCE(s.leetcode_rating, 1500) as leetcode_rating,
+               d.code as department_code
+        FROM students s
+        JOIN departments d ON s.department_id = d.id
+        WHERE d.code IN ('CS', 'IT', 'AIDS') AND s.role != 'admin' AND (s.leetcode_handle IS NOT NULL AND s.leetcode_handle != '')
+        ORDER BY s.leetcode_solved DESC, s.leetcode_rating DESC
+        LIMIT 3
+      `);
+    }
+
     // 4. Bus Routes
     const busRoutes = await query('SELECT * FROM bus_routes');
 
@@ -63,7 +109,12 @@ export async function getDashboard(req: AuthenticatedRequest, res: Response) {
       announcements,
       events,
       busRoutes,
-      clubs: parsedClubs
+      clubs: parsedClubs,
+      leetcodeStats: isComputingBranch ? {
+        ...studentInfo,
+        branchRank: leetcodeRank,
+        topCoders: topComputingCoders
+      } : null
     });
   } catch (error: any) {
     console.error('Error fetching dashboard:', error);
@@ -241,6 +292,37 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
   try {
     const { category, department } = req.query;
 
+    if (category === 'LeetCode') {
+      let sql = `
+        SELECT 
+          s.id as student_id,
+          s.name as student_name,
+          s.roll_number,
+          s.leetcode_handle,
+          COALESCE(s.leetcode_solved, 0) as leetcode_solved,
+          COALESCE(s.leetcode_easy, 0) as leetcode_easy,
+          COALESCE(s.leetcode_medium, 0) as leetcode_medium,
+          COALESCE(s.leetcode_hard, 0) as leetcode_hard,
+          COALESCE(s.leetcode_rating, 1500) as leetcode_rating,
+          COALESCE(s.leetcode_ranking, 0) as leetcode_ranking,
+          d.name as department_name,
+          d.code as department_code
+        FROM students s
+        JOIN departments d ON s.department_id = d.id
+        WHERE s.role != 'admin' AND (s.leetcode_handle IS NOT NULL AND s.leetcode_handle != '')
+      `;
+      const params: any[] = [];
+      if (department) {
+        sql += ` AND d.code = ?`;
+        params.push(department);
+      } else {
+        sql += ` AND d.code IN ('CS', 'IT', 'AIDS')`;
+      }
+      sql += ` ORDER BY s.leetcode_solved DESC, s.leetcode_rating DESC`;
+      const leetcodeBoard = await query(sql, params);
+      return res.json(leetcodeBoard);
+    }
+
     let sql = `
       SELECT l.points, l.category, s.name as student_name, s.roll_number, d.name as department_name, d.code as department_code
       FROM leaderboard l
@@ -265,6 +347,36 @@ export async function getLeaderboard(req: AuthenticatedRequest, res: Response) {
     return res.json(leaderboard);
   } catch (error: any) {
     console.error('Error fetching leaderboard:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function updateLeetCodeHandle(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const studentId = req.user.id;
+    const { handle, solved, easy, medium, hard, rating, ranking } = req.body;
+
+    if (!handle) {
+      return res.status(400).json({ error: 'LeetCode handle is required.' });
+    }
+
+    const solvedCount = solved !== undefined ? parseInt(solved) : 150;
+    const easyCount = easy !== undefined ? parseInt(easy) : Math.floor(solvedCount * 0.4);
+    const mediumCount = medium !== undefined ? parseInt(medium) : Math.floor(solvedCount * 0.45);
+    const hardCount = hard !== undefined ? parseInt(hard) : Math.floor(solvedCount * 0.15);
+    const contestRating = rating !== undefined ? parseInt(rating) : 1600;
+    const globalRank = ranking !== undefined ? parseInt(ranking) : 45000;
+
+    await exec(`
+      UPDATE students 
+      SET leetcode_handle = ?, leetcode_solved = ?, leetcode_easy = ?, leetcode_medium = ?, leetcode_hard = ?, leetcode_rating = ?, leetcode_ranking = ?
+      WHERE id = ?
+    `, [handle.trim(), solvedCount, easyCount, mediumCount, hardCount, contestRating, globalRank, studentId]);
+
+    return res.json({ message: 'LeetCode handle updated successfully!' });
+  } catch (error: any) {
+    console.error('Error updating LeetCode handle:', error);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 }

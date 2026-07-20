@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Calendar, 
@@ -13,7 +14,10 @@ import {
   Clock, 
   Sparkles,
   BookOpen,
-  X
+  X,
+  Code,
+  Trophy,
+  ExternalLink
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -99,7 +103,7 @@ const Dashboard: React.FC = () => {
             Department of {user?.departmentName} • Semester {user?.semester}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <div className="px-4 py-2 bg-midnight/60 border border-surface-accent/15 rounded text-center">
             <p className="text-[9px] uppercase tracking-widest text-surface-accent">Current GPA</p>
             <p className="text-lg font-bold text-accent font-mono mt-0.5">9.20</p>
@@ -108,6 +112,16 @@ const Dashboard: React.FC = () => {
             <p className="text-[9px] uppercase tracking-widest text-surface-accent">Attendance</p>
             <p className="text-lg font-bold text-accent font-mono mt-0.5">92%</p>
           </div>
+          {data?.leetcodeStats && (
+            <div className="px-4 py-2 bg-midnight/60 border border-amber-500/30 rounded text-center">
+              <p className="text-[9px] uppercase tracking-widest text-amber-400 font-bold flex items-center justify-center gap-1">
+                <Code className="w-3 h-3" /> LeetCode
+              </p>
+              <p className="text-lg font-bold text-amber-300 font-mono mt-0.5">
+                #{data.leetcodeStats.branchRank || 1} <span className="text-xs text-surface-accent font-normal">({data.leetcodeStats.leetcode_solved} solved)</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -224,8 +238,100 @@ const Dashboard: React.FC = () => {
           </section>
         </div>
 
-        {/* RIGHT COLUMN: Events & Clubs */}
+        {/* RIGHT COLUMN: LeetCode Arena, Events & Clubs */}
         <div className="lg:col-span-4 space-y-8">
+
+          {/* LEETCODE COMPUTING ARENA WIDGET */}
+          {data?.leetcodeStats && (
+            <section className="space-y-3">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xs uppercase tracking-widest text-amber-400 font-bold flex items-center gap-1.5">
+                  <Code className="w-4 h-4 text-amber-400" /> LeetCode Arena ({data.leetcodeStats.dept_code})
+                </h3>
+                <Link
+                  to="/leaderboard"
+                  className="text-[10px] text-amber-400 hover:text-amber-300 font-mono font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
+                >
+                  View Arena <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+
+              <div className="glass-card p-5 border border-amber-500/20 bg-amber-500/5 space-y-4">
+                {/* Student's LeetCode Profile Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-amber-500/15">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-warm-white">
+                        @{data.leetcodeStats.leetcode_handle || 'unlinked'}
+                      </span>
+                      {data.leetcodeStats.leetcode_handle && (
+                        <a
+                          href={`https://leetcode.com/u/${data.leetcodeStats.leetcode_handle}/`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-amber-400 hover:text-amber-300"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-surface-accent font-mono">
+                      Rating: <strong className="text-amber-300">{data.leetcodeStats.leetcode_rating}</strong> ({data.leetcodeStats.leetcode_rating >= 1900 ? 'Guardian' : 'Knight'})
+                    </span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-surface-accent tracking-wider block">Branch Rank</span>
+                    <span className="text-base font-black text-amber-400 font-mono flex items-center justify-end gap-1">
+                      <Trophy className="w-4 h-4 text-amber-400" /> #{data.leetcodeStats.branchRank || 1}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Problem Breakdown Pills */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded p-2">
+                    <span className="text-[9px] uppercase font-bold text-emerald-400 block">Easy</span>
+                    <span className="text-sm font-bold text-warm-white">{data.leetcodeStats.leetcode_easy}</span>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded p-2">
+                    <span className="text-[9px] uppercase font-bold text-amber-400 block">Medium</span>
+                    <span className="text-sm font-bold text-warm-white">{data.leetcodeStats.leetcode_medium}</span>
+                  </div>
+                  <div className="bg-rose-500/10 border border-rose-500/20 rounded p-2">
+                    <span className="text-[9px] uppercase font-bold text-rose-400 block">Hard</span>
+                    <span className="text-sm font-bold text-warm-white">{data.leetcodeStats.leetcode_hard}</span>
+                  </div>
+                </div>
+
+                {/* Top Computing Coders Snapshot */}
+                {data.leetcodeStats.topCoders?.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[10px] uppercase tracking-wider font-extrabold text-surface-accent block">
+                      Branch Top Coders
+                    </span>
+                    <div className="space-y-1.5">
+                      {data.leetcodeStats.topCoders.map((coder: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-xs font-mono bg-midnight/40 p-2 rounded border border-surface-accent/10">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center ${
+                              idx === 0 ? 'bg-amber-500/20 text-amber-400' :
+                              idx === 1 ? 'bg-slate-400/20 text-slate-300' :
+                              'bg-amber-700/20 text-amber-600'
+                            }`}>
+                              {idx + 1}
+                            </span>
+                            <span className="font-semibold text-warm-white">{coder.student_name}</span>
+                          </div>
+                          <span className="text-[11px] text-amber-300 font-bold">{coder.leetcode_solved} solved</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
           
           {/* EVENTS BOARD */}
           <section className="space-y-3">
@@ -299,38 +405,37 @@ const Dashboard: React.FC = () => {
           {/* CLUBS & SOCIETIES */}
           <section className="space-y-3">
             <h3 className="text-xs uppercase tracking-widest text-accent font-bold flex items-center gap-1.5">
-              <Users className="w-4 h-4" /> Clubs & Communities
+              <Users className="w-4 h-4" /> Clubs & Student Guilds
             </h3>
             <div className="space-y-4">
               {data?.clubs?.map((club: any) => (
                 <div key={club.id} className="glass-card p-5 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-warm-white">{club.name}</h4>
-                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-surface-primary text-accent font-bold font-mono">
-                      {club.category}
-                    </span>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 bg-surface-accent/20 text-accent rounded font-bold">
+                        {club.category}
+                      </span>
+                      <h4 className="text-sm font-bold text-warm-white mt-2">{club.name}</h4>
+                    </div>
+                    <span className="text-[10px] text-surface-accent font-mono">{club.members_count} Members</span>
                   </div>
-
+                  
                   <p className="text-[11px] leading-relaxed text-surface-accent">{club.description}</p>
                   
-                  {club.upcoming_events?.length > 0 && (
-                    <div className="bg-midnight/40 p-2.5 rounded border border-surface-accent/5 space-y-1">
-                      <span className="text-[9px] uppercase tracking-wider text-surface-accent font-bold">Upcoming Event</span>
-                      <p className="text-[10px] text-warm-white font-semibold">{club.upcoming_events[0].title}</p>
-                      <p className="text-[9px] text-surface-accent/70 font-mono">{club.upcoming_events[0].date}</p>
+                  {club.upcoming_events && club.upcoming_events.length > 0 && (
+                    <div className="border-t border-surface-accent/10 pt-3 space-y-2">
+                      <p className="text-[9px] uppercase tracking-wider text-accent font-semibold">Upcoming Club Events</p>
+                      {club.upcoming_events.map((e: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center text-[10px] bg-midnight/40 p-2 rounded">
+                          <span className="text-warm-white font-medium">{e.title}</span>
+                          <span className="text-surface-accent font-mono">{e.date}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center border-t border-surface-accent/10 pt-3">
-                    <span className="text-[10px] text-surface-accent flex items-center gap-1">
-                      👥 {club.members_count} Members
-                    </span>
-                    <button
-                      onClick={() => alert(`Joined ${club.name} successfully!`)}
-                      className="text-[10px] font-bold text-accent hover:underline flex items-center gap-0.5"
-                    >
-                      Join Guild <ChevronRight className="w-3 h-3" />
-                    </button>
+                  <div className="border-t border-surface-accent/10 pt-3 flex justify-between items-center text-[10px]">
+                    <span className="text-surface-accent">Club Lead: <strong className="text-warm-white">{club.leader_name}</strong></span>
                   </div>
                 </div>
               ))}
@@ -339,83 +444,78 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* EVENT DETAIL MODAL */}
+      {/* EVENT DETAILS MAXIMIZED MODAL */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="relative bg-surface-primary border border-surface-accent/20 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl animate-scale-up">
-            {/* Header / Close button */}
-            <div className="absolute top-4 right-4 z-10">
-              <button 
-                onClick={() => setSelectedEvent(null)}
-                className="p-2 rounded-full bg-midnight/60 hover:bg-midnight border border-surface-accent/15 text-warm-white hover:text-accent transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-midnight/80 backdrop-blur-md animate-fade-in">
+          <div className="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 relative border border-surface-accent/30 shadow-2xl">
+            <button
+              onClick={() => setSelectedEvent(null)}
+              className="absolute top-4 right-4 text-surface-accent hover:text-warm-white p-1 rounded font-bold cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold text-accent tracking-widest px-2.5 py-1 bg-surface-accent/20 rounded">
+                {selectedEvent.category} • {selectedEvent.type}
+              </span>
+              <h2 className="text-2xl font-extrabold text-warm-white">{selectedEvent.title}</h2>
             </div>
 
-            {/* Event Poster */}
-            {selectedEvent.image_url ? (
-              <div className="w-full bg-midnight/40 flex justify-center border-b border-surface-accent/10">
+            {selectedEvent.image_url && (
+              <div className="w-full h-72 overflow-hidden rounded-lg border border-surface-accent/20">
                 <img 
                   src={selectedEvent.image_url} 
                   alt={selectedEvent.title} 
-                  className="max-h-[50vh] w-full object-contain"
+                  className="w-full h-full object-cover object-center"
                 />
-              </div>
-            ) : (
-              <div className="w-full h-40 bg-accent/5 flex items-center justify-center border-b border-surface-accent/10">
-                <Calendar className="w-12 h-12 text-accent/40" />
               </div>
             )}
 
-            {/* Event Details */}
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] uppercase font-bold text-accent tracking-widest font-mono">
-                  {selectedEvent.category} • {selectedEvent.type}
+            <div className="space-y-3">
+              <h3 className="text-xs uppercase font-bold tracking-widest text-accent">About the Event</h3>
+              <p className="text-xs text-warm-white leading-relaxed whitespace-pre-line">{selectedEvent.description}</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-midnight/50 p-4 rounded-lg border border-surface-accent/15 text-xs font-mono">
+              <div>
+                <span className="text-surface-accent text-[10px] uppercase block">Date & Time</span>
+                <span className="text-warm-white font-bold">{selectedEvent.date} at {selectedEvent.time}</span>
+              </div>
+              <div>
+                <span className="text-surface-accent text-[10px] uppercase block">Location</span>
+                <span className="text-warm-white font-bold">{selectedEvent.location}</span>
+              </div>
+              <div>
+                <span className="text-surface-accent text-[10px] uppercase block">Available Seats</span>
+                <span className="text-warm-white font-bold">{selectedEvent.max_participants - selectedEvent.current_participants} spots left</span>
+              </div>
+              <div>
+                <span className="text-surface-accent text-[10px] uppercase block">Registration Status</span>
+                <span className={`font-bold ${selectedEvent.registered ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {selectedEvent.registered ? 'Registered ✓' : 'Open'}
                 </span>
-                <span className="text-xs text-surface-accent font-semibold font-mono">
-                  Capacity: {selectedEvent.current_participants} / {selectedEvent.max_participants}
-                </span>
               </div>
+            </div>
 
-              <h2 className="text-xl font-extrabold text-warm-white">{selectedEvent.title}</h2>
-              
-              <p className="text-xs leading-relaxed text-surface-accent whitespace-pre-line">{selectedEvent.description}</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-midnight/30 p-4 rounded-lg border border-surface-accent/5 text-xs text-surface-accent font-mono">
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase text-accent font-bold">Schedule</p>
-                  <p className="text-warm-white">📅 {selectedEvent.date}</p>
-                  <p className="text-warm-white">⏰ {selectedEvent.time}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase text-accent font-bold">Location</p>
-                  <p className="text-warm-white">📍 {selectedEvent.location}</p>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  disabled={selectedEvent.registered || regLoading === selectedEvent.id}
-                  onClick={() => handleRegister(selectedEvent.id)}
-                  className={`w-full py-3 rounded text-xs uppercase font-extrabold tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    selectedEvent.registered
-                      ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/30'
-                      : 'bg-btn-gradient text-midnight hover:opacity-90'
-                  }`}
-                >
-                  {regLoading === selectedEvent.id ? (
-                    <div className="w-4 h-4 border-2 border-midnight border-t-transparent rounded-full animate-spin"></div>
-                  ) : selectedEvent.registered ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" /> Successfully Registered
-                    </>
-                  ) : (
-                    'Confirm Spot Registration'
-                  )}
-                </button>
-              </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="px-4 py-2 rounded text-xs uppercase font-bold bg-surface-primary/30 text-surface-accent hover:text-warm-white cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                disabled={selectedEvent.registered || regLoading === selectedEvent.id}
+                onClick={() => handleRegister(selectedEvent.id)}
+                className={`px-6 py-2 rounded text-xs uppercase font-bold tracking-wider cursor-pointer ${
+                  selectedEvent.registered
+                    ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 cursor-default'
+                    : 'bg-btn-gradient text-midnight hover:opacity-90'
+                }`}
+              >
+                {regLoading === selectedEvent.id ? 'Registering...' : selectedEvent.registered ? 'Registered ✓' : 'Confirm Registration'}
+              </button>
             </div>
           </div>
         </div>

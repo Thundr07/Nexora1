@@ -111,9 +111,24 @@ async function runMigrationsAndSeed() {
       email VARCHAR(255) NOT NULL UNIQUE,
       password_hash VARCHAR(255) NOT NULL,
       role VARCHAR(20) DEFAULT 'student',
+      leetcode_handle VARCHAR(100),
+      leetcode_solved INTEGER DEFAULT 0,
+      leetcode_easy INTEGER DEFAULT 0,
+      leetcode_medium INTEGER DEFAULT 0,
+      leetcode_hard INTEGER DEFAULT 0,
+      leetcode_rating INTEGER DEFAULT 1500,
+      leetcode_ranking INTEGER DEFAULT 0,
       FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
     )
   `);
+
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_handle VARCHAR(100)`); } catch (err) {}
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_solved INTEGER DEFAULT 0`); } catch (err) {}
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_easy INTEGER DEFAULT 0`); } catch (err) {}
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_medium INTEGER DEFAULT 0`); } catch (err) {}
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_hard INTEGER DEFAULT 0`); } catch (err) {}
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_rating INTEGER DEFAULT 1500`); } catch (err) {}
+  try { await exec(`ALTER TABLE students ADD COLUMN leetcode_ranking INTEGER DEFAULT 0`); } catch (err) {}
 
   // 3. Create Faculty
   await exec(`
@@ -684,5 +699,38 @@ async function runMigrationsAndSeed() {
       console.log(`Auto-seeding department ${dept.code} (${dept.name})...`);
       await exec("INSERT INTO departments (name, code) VALUES (?, ?)", [dept.name, dept.code]);
     }
+  }
+
+  // Ensure computing branch students have seed LeetCode stats if missing
+  try {
+    const csDept = await query("SELECT id FROM departments WHERE code = 'CS'");
+    const itDept = await query("SELECT id FROM departments WHERE code = 'IT'");
+    const aidsDept = await query("SELECT id FROM departments WHERE code = 'AIDS'");
+    const compDeptIds = [...csDept, ...itDept, ...aidsDept].map(d => d.id);
+
+    if (compDeptIds.length > 0) {
+      const placeholders = compDeptIds.map(() => '?').join(',');
+      const compStudents = await query(`SELECT * FROM students WHERE department_id IN (${placeholders})`, compDeptIds);
+      for (const student of compStudents) {
+        if (!student.leetcode_handle || student.leetcode_solved === 0) {
+          if (student.email === 'alice@nexora.edu') {
+            await exec(`UPDATE students SET leetcode_handle = ?, leetcode_solved = ?, leetcode_easy = ?, leetcode_medium = ?, leetcode_hard = ?, leetcode_rating = ?, leetcode_ranking = ? WHERE id = ?`,
+              ['alice_vance', 485, 180, 245, 60, 1942, 14200, student.id]);
+          } else if (student.email === 'charlie@nexora.edu') {
+            await exec(`UPDATE students SET leetcode_handle = ?, leetcode_solved = ?, leetcode_easy = ?, leetcode_medium = ?, leetcode_hard = ?, leetcode_rating = ?, leetcode_ranking = ? WHERE id = ?`,
+              ['charlie_dev', 360, 150, 170, 40, 1785, 32500, student.id]);
+          } else if (student.email === 'dave@nexora.edu') {
+            await exec(`UPDATE students SET leetcode_handle = ?, leetcode_solved = ?, leetcode_easy = ?, leetcode_medium = ?, leetcode_hard = ?, leetcode_rating = ?, leetcode_ranking = ? WHERE id = ?`,
+              ['dave_coder', 210, 110, 85, 15, 1620, 75000, student.id]);
+          } else if (student.role !== 'admin') {
+            const handle = student.name.toLowerCase().replace(/\s+/g, '_') + '_lc';
+            await exec(`UPDATE students SET leetcode_handle = ?, leetcode_solved = ?, leetcode_easy = ?, leetcode_medium = ?, leetcode_hard = ?, leetcode_rating = ?, leetcode_ranking = ? WHERE id = ?`,
+              [handle, 275, 120, 130, 25, 1690, 52000, student.id]);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error auto-seeding LeetCode stats:', err);
   }
 }

@@ -9,7 +9,8 @@ import {
   toggleAssignment,
   getNotifications,
   markNotificationRead,
-  globalSearch
+  globalSearch,
+  updateLeetCodeHandle
 } from '../controllers/studentController';
 import { submitFeedback, getStudentFeedback } from '../controllers/feedbackController';
 import { chatAssistant } from '../controllers/aiController';
@@ -48,6 +49,7 @@ router.get('/student/dashboard', authenticateToken as any, getDashboard as any);
 router.get('/student/academics', authenticateToken as any, getAcademics as any);
 router.get('/student/foryou', authenticateToken as any, getForYou as any);
 router.get('/student/leaderboard', authenticateToken as any, getLeaderboard as any);
+router.put('/student/leetcode-handle', authenticateToken as any, updateLeetCodeHandle as any);
 router.post('/student/event-register', authenticateToken as any, registerEvent as any);
 router.post('/student/toggle-assignment', authenticateToken as any, toggleAssignment as any);
 router.get('/student/notifications', authenticateToken as any, getNotifications as any);
