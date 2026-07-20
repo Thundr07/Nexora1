@@ -504,8 +504,8 @@ async function runMigrationsAndSeed() {
       500
     ]);
     await exec(`
-      INSERT INTO events (title, description, category, type, date, time, location, department_id, max_participants)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO events (title, description, category, type, date, time, location, department_id, max_participants, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       'Intra-College Football League',
       'The annual soccer league tournament open to all departments.',
@@ -515,7 +515,24 @@ async function runMigrationsAndSeed() {
       '04:00 PM',
       'Sports Arena Pitch A',
       null,
-      80
+      80,
+      'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=800&auto=format&fit=crop'
+    ]);
+
+    await exec(`
+      INSERT INTO events (title, description, category, type, date, time, location, department_id, max_participants, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      "Fresher's Party 2026 - Ignite & Shine",
+      'Saranathan College of Engineering presents A Grand Welcome to the New Beginning for the Batch of 2026-2030! Join us for an unforgettable night of Live DJ & Dance Floor, Music & Cultural Performances, Fun Games & Activities, and a Delicious Dinner.',
+      'Cultural',
+      'Event',
+      '2026-10-18',
+      '06:00 PM Onwards',
+      'SCE Main Auditorium',
+      null,
+      500,
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=800&auto=format&fit=crop'
     ]);
 
     const events = await query('SELECT * FROM events');

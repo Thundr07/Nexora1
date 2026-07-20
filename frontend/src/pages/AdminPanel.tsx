@@ -181,6 +181,35 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid JPG or PNG image file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const base64Data = uploadEvent.target?.result as string;
+      setEvtImgUrl(base64Data);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAutofillFreshersParty = () => {
+    setEvtTitle("Fresher's Party 2026 - Ignite & Shine");
+    setEvtCat('Cultural');
+    setEvtType('Event');
+    setEvtDate('2026-10-18');
+    setEvtTime('06:00 PM Onwards');
+    setEvtLoc('SCE Main Auditorium');
+    setEvtCap('500');
+    setEvtDesc('Saranathan College of Engineering presents A Grand Welcome to the New Beginning for the Batch of 2026-2030! Join us for an unforgettable night of Live DJ & Dance Floor, Music & Cultural Performances, Fun Games & Activities, and a Delicious Dinner.');
+    setEvtImgUrl('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=800&auto=format&fit=crop');
+  };
+
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     setEvtSuccess(null);
@@ -893,16 +922,52 @@ const AdminPanel: React.FC = () => {
 
                 <div>
                   <label className="block text-[10px] uppercase tracking-widest text-surface-accent font-semibold mb-1">
-                    Event Poster Image URL (Optional)
+                    Upload JPG Poster Image / Image URL
                   </label>
-                  <input
-                    type="text"
-                    value={evtImgUrl}
-                    onChange={(e) => setEvtImgUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/... or click a preset below"
-                    className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-4 py-2 text-warm-white focus:outline-none focus:border-accent text-xs font-mono"
-                  />
+                  
+                  <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                    <label className="px-3 py-2 bg-accent/10 border border-accent/30 hover:bg-accent/20 rounded text-xs font-bold text-accent transition-all cursor-pointer shrink-0 flex items-center justify-center gap-1.5">
+                      <PlusCircle className="w-3.5 h-3.5" /> Attach JPG File
+                      <input
+                        type="file"
+                        accept="image/jpeg, image/jpg, image/png, image/webp"
+                        onChange={handleImageFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <input
+                      type="text"
+                      value={evtImgUrl}
+                      onChange={(e) => setEvtImgUrl(e.target.value)}
+                      placeholder="Or paste image URL (https://... or base64)"
+                      className="w-full bg-midnight/50 border border-surface-accent/20 rounded px-3 py-2 text-warm-white focus:outline-none focus:border-accent text-xs font-mono"
+                    />
+                  </div>
+
+                  {evtImgUrl && (
+                    <div className="mt-2.5 relative w-full h-32 rounded-lg overflow-hidden border border-accent/40 group bg-surface-primary">
+                      <img src={evtImgUrl} alt="Poster Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setEvtImgUrl('')}
+                          className="px-3 py-1 bg-rose-600 text-white rounded text-xs font-bold shadow-md hover:bg-rose-700 transition-colors"
+                        >
+                          Remove Poster
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-1.5 mt-2">
+                    <button
+                      type="button"
+                      onClick={handleAutofillFreshersParty}
+                      className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[10px] font-bold rounded text-amber-300 transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      🎉 Auto-Fill Fresher's Party 2026
+                    </button>
                     <button
                       type="button"
                       onClick={() => setEvtImgUrl('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop')}
